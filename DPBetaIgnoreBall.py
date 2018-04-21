@@ -209,7 +209,6 @@ for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=
     # cv2.imwrite('../videos/videoCCEFrame'+ str(frameNo) +'.jpg',img_rgb)
     if pinReactionFlag:
         if time.process_time()-3 > pinReactionTime:
-            
             activity = activity + str(priorPinCount)+','
             print(activity)
             pinReactionFlag = False
@@ -217,9 +216,11 @@ for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=
     if setterPresent:
             if firstSetterFrame + 60 > frameNo:
                 continue
+
     if armPresent:
             if firstArmFrame + 70 > frameNo:
                 continue
+            bit_GPIO(pinsGPIO,1023)
             if firstArmFrame+ 70 == frameNo:
                 armPresent = False
                 activity = activity + str(priorPinCount)+ ',-1,'
@@ -254,33 +255,12 @@ for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=
             center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
             cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
             print (center)
-            if center < (900,200):
-                    ballCoords[ballCounter] = center
-                    # activity = activity + str(priorPinCount) + ','+ str(center)+ ','
-                    
-                    # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
-                    if ballCounterFrame == frameNo - 1:
-                        activity = activity + str(center)+ ','
-                        ballCounter = ballCounter+1      
-                    else:
-                        activity = activity + str(priorPinCount) + ','+ str(center)+ ','
-                        ballCounter = 0
-                        ballCounterFrame = frameNo
-                        pinReactionTime = time.process_time()
-                        pinReactionFlag = True
-                        print('CENTER',center, radius, ballCoords[ballCounter], frameNo, len(cnts),ballCounter)
-                        print('Activity', activity)
-                        if len(activity) > 500:
-                            activity = activity + "\r\n"
-                            print('Send')
-                            iotSend(activity)
-                            activity = "\r\n"
-            else:
+            if center > (900,200):
                 firstArmFrame = frameNo
                 armPresent = True
     # cv2.imshow('Ball', img_gray2)
     # cv2.imshow('Thresh' , thresh)
-    camera.annotate_text = "Duckpins = "+ str(time.process_time()) + " " + str(frameNo) + " " + str(priorPinCount)
+    # camera.annotate_text = "Duckpins = "+ str(time.process_time()) + " " + str(frameNo) + " " + str(priorPinCount)
     writeImageSeries(20, 3, img_rgb)
     # cv2.imshow('Frame' , img_rgb)
     if frameNo%5 ==0:
