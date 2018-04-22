@@ -141,8 +141,8 @@ def iotSend(msg):
             message_counter = frameNo
             message = iot.IoTHubMessage((msg))
             print('msg_txt_formatted', message)
-            message.ContentEncoding = "utf-8"; 
-            message.ContentType = "application/json"; 
+            message.ContentEncoding = "utf-8"
+            message.ContentType = "application/json"
             client.send_event_async(message, iot.send_confirmation_callback, message_counter)
             print ( "IoTHubClient.send_event_async accepted message [%d] for transmission to IoT Hub." % message_counter )
 
