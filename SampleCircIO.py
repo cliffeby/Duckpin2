@@ -4,10 +4,11 @@ import picamera
 
 def write_now():
     # Randomly return True (like a fake motion detection routine)
-    return random.randint(0, 10) == 0
+    return random.randint(0, 5) == 0
 
 def write_video(stream):
-    print('Writing video!')
+    global counter
+    print('Writing video!'+ str(counter))
     with stream.lock:
         # Find the first header frame in the video
         for frame in stream.frames:
@@ -15,11 +16,11 @@ def write_video(stream):
                 stream.seek(frame.position)
                 break
         # Write the rest of the stream to disk
-        with io.open('motion.h264', 'wb') as output:
+        with io.open('../videos/motion'+ str(counter)+ '.h264', 'wb') as output:
             output.write(stream.read())
-
+counter = 0
 with picamera.PiCamera() as camera:
-    stream = picamera.PiCameraCircularIO(camera, seconds=20)
+    stream = picamera.PiCameraCircularIO(camera, seconds=3)
     camera.start_recording(stream, format='h264')
     try:
         while True:
@@ -27,7 +28,8 @@ with picamera.PiCamera() as camera:
             if write_now():
                 # Keep recording for 10 seconds and only then write the
                 # stream to disk
-                camera.wait_recording(10)
+                camera.wait_recording(2)
+                counter +=1
                 write_video(stream)
     finally:
         camera.stop_recording()
