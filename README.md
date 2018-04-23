@@ -2,5 +2,4 @@
 
 A project to light the Lucite numbers, and determine ball location and velocity.
 
-![alt text](https://raw.githubusercontent.com/cliffeby/Duckpin2/master/Duckpin2/IMG_0618.jpg)
-![loginbody](https://user-images.githubusercontent.com/1431998/32575246-79a6f4c8-c4a1-11e7-8ab3-687e2fd7e815.png)
+![img_0618](https://user-images.githubusercontent.com/1431998/39154611-dd48b270-471c-11e8-89e4-fc6927e1b598.jpg)
