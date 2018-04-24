@@ -30,7 +30,7 @@ with picamera.PiCamera() as camera:
             if write_now():
                 # Keep recording for 10 seconds and only then write the
                 # stream to disk
-                camera.wait_recording(2)
+                # camera.wait_recording(2)
                 counter +=1
                 write_video(stream)
                 stream.clear()
