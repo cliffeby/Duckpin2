@@ -46,7 +46,8 @@ motion_sensitivity = 6
 #motion_masks = [ [[1,motion_width],[1,motion_height]] ]
 # another example
 motion_mask_count = 1
-motion_masks = [ [[270,370],[190,290]]  ]
+motion_masks = [ [[10,450],[300,475]]  ]
+# motion_masks = [ [[270,370],[190,290]]  ]
 # exaple for 2 mask areas
 #motion_mask_count = 2
 #motion_masks = [ [[1,320],[1,240]], [[400,500],[300,400]] ]
