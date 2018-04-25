@@ -1,10 +1,12 @@
 # import the necessary packages
 import io
+import sys
 import time
 import cv2
 import numpy as np
 import picamera
 from PIL import Image
+print(sys.argv)
 
 mx=0
 my=0
@@ -16,6 +18,15 @@ frameNo = 0
 mask_crop_ranges = ([500,900,100,1300],[0,0,0,0])
 crop_ranges = ([445,515, 755,825],[360,440, 710,755],[370,450, 885,940],[320,385, 655,705],[320,385, 815,875],
     [330,380, 980,1035],[275,345, 605,665],[275,345, 745,805],[275,345, 895,955],[275,345, 1060,1120])
+if sys.argv[1]=="LOW":
+    height = 912/480
+    width = 1440/640
+    mask_crop_ranges[0,0] = int(mask_crop_ranges[0,0]/height)
+    mask_crop_ranges[0,1] = int(mask_crop_ranges[0,1]/width)
+    mask_crop_ranges[0,2] = int(mask_crop_ranges[0,2]/height)
+    mask_crop_ranges[0,3] = int(mask_crop_ranges[0,3]/width)
+
+
 
 def drawPinRectangles():
     global pin_image
@@ -69,23 +80,28 @@ def detect_motion(camera):
     
     if frameNo == 9:
         pin_image = image
-        drawPinRectangles()
-    if frameNo == 10:
-        ball_image = image
         drawBallRectangles()
-    if frameNo == 11:
-        ball_image = image
-        drawBallRectangles()
-        pin_image = ball_image
-        drawPinRectangles()
+    if sys.argv[1]=="HIGH":
+        if frameNo == 10:
+            ball_image = image
+            drawPinRectangles()
+        if frameNo == 11:
+            ball_image = image
+            drawBallRectangles()
+            pin_image = ball_image
+            drawPinRectangles()
 
     return True
        
 # initialize the camera and grab a reference to the raw camera capture
 
 with picamera.PiCamera() as camera:
-    camera.resolution = (1440, 900)
+    if sys.argv[1] == 'HIGH':
+        camera.resolution = (1440, 900)
+    if sys.argv[1] == "LOW":
+        camera.resolution = (640,480)
     # camera.brightness = 45
+    print("SYSARRGV", sys.argv[1])
     camera.rotation = 180
     stream = picamera.PiCameraCircularIO(camera, seconds=5)
     camera.start_recording(stream, format='h264')
