@@ -7,7 +7,8 @@ import numpy as np
 import picamera
 from PIL import Image
 print(sys.argv)
-
+if len(sys.argv) != 2:
+    print('Add parameter "HIGH" or "LOW"')
 mx=0
 my=0
 x=-50
@@ -21,12 +22,19 @@ crop_ranges = ([445,515, 755,825],[360,440, 710,755],[370,450, 885,940],[320,385
 if sys.argv[1]=="LOW":
     height = 912/480
     width = 1440/640
+    x = int(x/width)
+    y = int(y/height)
     mask_crop_ranges[0][0] = int(mask_crop_ranges[0][0]/height)
-    mask_crop_ranges[0][1] = int(mask_crop_ranges[0][1]/width)
-    mask_crop_ranges[0][2] = int(mask_crop_ranges[0][2]/height)
+    mask_crop_ranges[0][1] = int(mask_crop_ranges[0][1]/height)
+    mask_crop_ranges[0][2] = int(mask_crop_ranges[0][2]/width)
     mask_crop_ranges[0][3] = int(mask_crop_ranges[0][3]/width)
-
-
+    for ii in range(0,10):
+        print('CRB', crop_ranges[ii])
+        crop_ranges[ii][0] = int(crop_ranges[ii][0]/height)
+        crop_ranges[ii][1] = int(crop_ranges[ii][1]/height)
+        crop_ranges[ii][2] = int(crop_ranges[ii][2]/width)
+        crop_ranges[ii][3] = int(crop_ranges[ii][3]/width)
+        print('CRA', crop_ranges[ii])
 
 def drawPinRectangles():
     global pin_image
@@ -81,15 +89,14 @@ def detect_motion(camera):
     if frameNo == 9:
         ball_image = image
         drawBallRectangles()
-    if sys.argv[1]=="HIGH":
-        if frameNo == 10:
-            pin_image = image
-            drawPinRectangles()
-        if frameNo == 11:
-            ball_image = image
-            drawBallRectangles()
-            pin_image = ball_image
-            drawPinRectangles()
+    if frameNo == 10:
+        pin_image = image
+        drawPinRectangles()
+    if frameNo == 11:
+        ball_image = image
+        drawBallRectangles()
+        pin_image = ball_image
+        drawPinRectangles()
 
     return True
        
