@@ -220,7 +220,7 @@ for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=
     if armPresent:
             if firstArmFrame + 70 > frameNo:
                 continue
-            bit_GPIO(pinsGPIO,1023)
+            
             if firstArmFrame+ 70 == frameNo:
                 armPresent = False
                 activity = activity + str(priorPinCount)+ ',-1,'
@@ -258,6 +258,7 @@ for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=
             if center > (900,200):
                 firstArmFrame = frameNo
                 armPresent = True
+                bit_GPIO(pinsGPIO,1023)
     # cv2.imshow('Ball', img_gray2)
     # cv2.imshow('Thresh' , thresh)
     # camera.annotate_text = "Duckpins = "+ str(time.process_time()) + " " + str(frameNo) + " " + str(priorPinCount)
