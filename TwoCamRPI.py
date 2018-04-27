@@ -24,17 +24,17 @@ debug = 1
 #seup filepath for motion capure data
 filepath = '/home/pi/Shared/videos'
 # setup pre and post video recording around motion event
-video_preseconds = 3
-video_postseconds = 3
+video_preseconds = 2
+video_postseconds = 1
 #setup video/snapshot resolution
-video_width = 640   #1280
-video_height = 480  #720
+video_width = 1280 #640   #1280
+video_height = 720 #480  #720
 #setup video rotation (0, 180)
 video_rotation = 180
 
 # setup motion detection resolution, equal or smaller than video resolution
-motion_width = 640
-motion_height = 480
+motion_width = 1200 #640
+motion_height = 700 #480
 # setup motion detection threshold, i.e. magnitude of a motion block to count as  motion
 motion_threshold = 30
 # setup motion detection sensitivity, i.e number of motion blocks that trigger a motion detection
@@ -46,7 +46,7 @@ motion_sensitivity = 6
 #motion_masks = [ [[1,motion_width],[1,motion_height]] ]
 # another example
 motion_mask_count = 1
-motion_masks = [ [[10,450],[300,475]]  ]
+motion_masks = [ [[10,1100],[500,650]]  ] #[ [[10,450],[300,475]]  ]
 # motion_masks = [ [[270,370],[190,290]]  ]
 # exaple for 2 mask areas
 #motion_mask_count = 2
