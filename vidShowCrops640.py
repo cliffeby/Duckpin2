@@ -8,14 +8,14 @@ import numpy as np
 
 mx=0
 my=0
-x=20
+x=0
 y=0
 frameNo = 0
 
 # crop_ranges are y,y1,x,x1 from top left
-mask_crop_ranges = ([500,850,100,1400],[0,0,0,0])
-crop_ranges = ([390,490, 820,930],[325,425, 735,835],[345,445, 960,1060],[265,365, 680,760],[280,380, 860,960],
-    [300,400, 1065,1165],[260,360, 600,680],[265,365, 790,890],[275,370, 970,1070],[280,380, 1150,1250])
+mask_crop_ranges = ([300,475,20,580],[0,0,0,0])
+crop_ranges = ([235,260, 315,340],[205,230, 290,315],[205,230,365,390],[180,205, 260,280],[180,205, 335,360],
+    [180,205, 410,435],[155,180, 250,275],[155,180, 315,335],[155,180, 380,400],[155,180, 450,470])
 
 def drawPinRectangles():
     global pin_image
@@ -29,8 +29,8 @@ def drawPinRectangles():
         b = (crop_ranges[i][3]+x, crop_ranges[i][1]+y)
         cv2.rectangle(pin_image, b, a, 255, 2)
         if i == 6:
-            cv2.putText(pin_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-            cv2.putText(pin_image,str(b),b,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+            cv2.putText(pin_image,str(a),a,cv2.FONT_HERSHEY_COMPLEX_SMALL,1,(255,255,255),2)
+            cv2.putText(pin_image,str(b),b,cv2.FONT_HERSHEY_COMPLEX_SMALL,1,(255,255,255),2)
     if frameNo==11:
         cv2.imwrite('../videos/AAA/AVidCombinedMask.jpg',pin_image)
     else:
