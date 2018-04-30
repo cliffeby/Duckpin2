@@ -6,27 +6,10 @@ import numpy
 # import RPi.GPIO as GPIO
 # from matplotlib import pyplot as plt
 
-pinsGPIO = [6, 26, 20, 5, 21, 3, 16, 2, 14, 15]
-mask_crop_ranges = ([1100,1700, 220,2800],[0,0,0,0])
-pin_crop_ranges = ([390,490, 820,930],[325,425, 735,835],[345,445, 960,1060],[265,365, 680,760],[280,380, 860,960],
-    [300,400, 1065,1165],[260,360, 600,680],[265,365, 790,890],[275,370, 970,1070],[280,380, 1150,1250])
-
-def setupGPIO(pins):
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
-    for pin in pins:
-        GPIO.setup(pin,GPIO.OUT)
-        print ("setup Completed")
-
-def bit_GPIO(pins,pinCount):
-    bits = "{0:b}".format(pinCount)
-    while len(bits)<10:
-        bits = "0"+bits
-    for idx in range(0,len(bits)):
-        if(bits[idx]=="1"):
-             GPIO.output(pins[idx], GPIO.HIGH)
-        else:
-            GPIO.output(pins[idx], GPIO.LOW)
+# crop_ranges are y,y1,x,x1 from top left
+mask_crop_ranges = ([300,475,20,580],[0,0,0,0])
+pin_crop_ranges = ([235,260, 315,340],[205,230, 290,315],[205,230,365,390],[180,205, 260,280],[180,205, 335,360],
+    [180,205, 410,435],[155,180, 250,275],[155,180, 315,335],[155,180, 380,400],[155,180, 450,470])
 
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
