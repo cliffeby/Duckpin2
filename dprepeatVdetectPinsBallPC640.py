@@ -14,8 +14,8 @@ pin_crop_ranges = ([235,260, 315,340],[205,230, 290,315],[205,230,365,390],[180,
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
         if frameNo <= frameNoStart+numberOfFrames:
-            print ('Saving ../videos/video3dFrame'+ str(frameNo) +'.jpg')
-            cv2.imwrite('../videos/video3dFrame'+ str(frameNo) +'.jpg',img_rgb)
+            print ('Saving ../videos/video3d640Frame'+ str(frameNo) +'.jpg')
+            cv2.imwrite('../videos/video3d640Frame'+ str(frameNo) +'.jpg',img_rgb)
 
 def isPinSetter():
     global setterPresent
@@ -23,7 +23,7 @@ def isPinSetter():
     global img_rgb
     global firstSetterFrame  
     # Convert BGR to HSV
-    frame = img_rgb[150:450, 650:1600]
+    frame = img_rgb[50:250, 500:630]
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # define range of green color in HSV
     lower_green = numpy.array([65,60,60])
@@ -82,27 +82,27 @@ def findPins():
             priorPinCount = pinCount
             return True
     
-cap = cv2.VideoCapture('../videos/output2.mp4')
+cap = cv2.VideoCapture('../videos/AAA/video640.h264')
 # setupGPIO(pinsGPIO)
 setterPresent = False
 armPresent = False
 priorPinCount = 0
-x=20
+x=0
 x1=0 +x
 y=-0
 y1=0 + y
-crop_ranges = ([1200,1800, 220,2800],[0,0,0,0])
+crop_ranges = ([300,475,20,580],[0,0,0,0])
 
 frameNo = 0
 prevFrame = 0
 ballCounter = [0]*3
 origCounter = 0
 for i in range(0,1):
-    a =(int(crop_ranges[i][2]/2)+x,int(crop_ranges[i][0]/2)+y)
-    b = (int(crop_ranges[i][3]/2)+x1, int(crop_ranges[i][1]/2)+y1)
+    a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
+    b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
 ret, frame1 = cap.read()
-mask= frame1[650:900, 250:1300]
-frame1 = mask
+mask= frame1 #frame1[300,400,20,580]
+# frame1 = mask
 
 while(cap.isOpened()):
     ret, frame2 = cap.read()
@@ -111,7 +111,7 @@ while(cap.isOpened()):
     except:
         print ("New Video")
         cap.release()
-        cap = cv2.VideoCapture('../videos/video3e.h264')
+        cap = cv2.VideoCapture('../videos/AAA/video640.h264')
         ret, frame2 = cap.read()
     frameNo = frameNo +1
     img_rgb = frame2
@@ -126,7 +126,7 @@ while(cap.isOpened()):
                 armPresent = False
 
     isPinSetter()
-    frame2= frame2[650:900, 250:1300]
+    # frame2= frame2[300,475,20,580]
     img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1,img_gray2)
@@ -155,7 +155,7 @@ while(cap.isOpened()):
             M = cv2.moments(c)
             center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
             cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
-            if center < (1100,200):
+            if center < (550,200):
                     print('CENTER',center, radius, frameNo, len(cnts))
                     # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
             else:
@@ -168,7 +168,7 @@ while(cap.isOpened()):
     cv2.rectangle(img_rgb,b, a, 255,2)
 
     # cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
-    # writeImageSeries(135,20)
+    writeImageSeries(952,10, img_rgb)
     
     key = cv2.waitKey(1) & 0xFF
     
