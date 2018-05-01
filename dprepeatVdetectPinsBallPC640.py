@@ -23,7 +23,7 @@ def isPinSetter():
     global img_rgb
     global firstSetterFrame  
     # Convert BGR to HSV
-    frame = img_rgb[50:250, 500:630]
+    frame = img_rgb[50:150, 300:340]
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # define range of green color in HSV
     lower_green = numpy.array([65,60,60])
@@ -38,7 +38,7 @@ def isPinSetter():
     for cnt in contours:
         #Contour area is measured
         area = cv2.contourArea(cnt) +area
-    if area >10000:
+    if area >1000:
         setterPresent = True
         firstSetterFrame = frameNo
     if setterPresent:
@@ -59,12 +59,13 @@ def findPins():
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
-        lower_red = numpy.array([0,0,100]) # lower_red = np.array([0,100,0])
+        # lower_red = numpy.array([0,0,100]) # lower_red = np.array([0,100,0])
+        # upper_red = numpy.array([110, 110, 255])  # upper_red = np.array([180,255,255])
+        lower_red = numpy.array([0,0,70]) # lower_red = np.array([0,100,0])
         upper_red = numpy.array([110, 110, 255])  # upper_red = np.array([180,255,255])
-
         mask = cv2.inRange(img_rgb,lower_red,upper_red)
         output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
-        threshold = 5
+        threshold = 3
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 hist = cv2.calcHist([crop[i]],[1],None,[4], [10,50])
@@ -82,7 +83,7 @@ def findPins():
             priorPinCount = pinCount
             return True
     
-cap = cv2.VideoCapture('../videos/AAA/video640.h264')
+cap = cv2.VideoCapture('../videos/xxx/output.mp4')
 # setupGPIO(pinsGPIO)
 setterPresent = False
 armPresent = False
@@ -91,7 +92,7 @@ x=0
 x1=0 +x
 y=-0
 y1=0 + y
-crop_ranges = ([300,475,20,580],[0,0,0,0])
+crop_ranges = ([300,475,50,580],[0,0,0,0])
 
 frameNo = 0
 prevFrame = 0
@@ -101,8 +102,8 @@ for i in range(0,1):
     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
 ret, frame1 = cap.read()
-mask= frame1 #frame1[300,400,20,580]
-# frame1 = mask
+mask= frame1[300:475,50:580]
+frame1 = mask
 
 while(cap.isOpened()):
     ret, frame2 = cap.read()
@@ -111,7 +112,7 @@ while(cap.isOpened()):
     except:
         print ("New Video")
         cap.release()
-        cap = cv2.VideoCapture('../videos/AAA/video640.h264')
+        cap = cv2.VideoCapture('../videos/AAA/video640a.h264')
         ret, frame2 = cap.read()
     frameNo = frameNo +1
     img_rgb = frame2
@@ -126,7 +127,7 @@ while(cap.isOpened()):
                 armPresent = False
 
     isPinSetter()
-    # frame2= frame2[300,475,20,580]
+    frame2= frame2[300:475,50:580]
     img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1,img_gray2)
@@ -155,7 +156,7 @@ while(cap.isOpened()):
             M = cv2.moments(c)
             center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
             cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
-            if center < (550,200):
+            if center < (500,200):
                     print('CENTER',center, radius, frameNo, len(cnts))
                     # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
             else:
@@ -167,8 +168,8 @@ while(cap.isOpened()):
 
     cv2.rectangle(img_rgb,b, a, 255,2)
 
-    # cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
-    writeImageSeries(952,10, img_rgb)
+    cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
+    writeImageSeries(215,10, img_rgb)
     
     key = cv2.waitKey(1) & 0xFF
     
