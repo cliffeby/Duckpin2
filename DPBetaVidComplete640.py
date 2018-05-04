@@ -46,10 +46,34 @@ def isPinSetter():
     else:
         firstSetterFrame = 0
 
-def arm():
-    global firstArmFrame
+def isResetArm():
+    global firstArmFrame, armPresent, ballCounter
     global frameNo
-    firstArmFrame = frameNo
+    global img_rgb
+    global img_gray1arm
+    global threshArm
+    frame2arm = img_rgb[155:270,540:600]
+    img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+    diff = cv2.absdiff(img_gray1arm,img_gray2arm)
+    # First value reduces noise.  Values above 150 seem to miss certain ball colors
+    ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    frame = threshArm
+    # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
+    threshArm = cv2.medianBlur(threshArm,15)
+    cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
+		cv2.CHAIN_APPROX_SIMPLE)[-2]
+    center = None
+    radius = 0
+    if len(cnts) > 0:
+		# find the largest contour in the mask, then use
+		# it to compute the minimum enclosing circle and centroid
+        c = max(cnts, key=cv2.contourArea)
+        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+        if radius>15:
+            print('Reset Arm', radius, frameNo, len(cnts))
+            firstArmFrame = frameNo
+            armPresent = True
+            ballCounter = 0
 
 def findPins():
         global x,x1,y,y1
@@ -83,7 +107,7 @@ def findPins():
             priorPinCount = pinCount
             return True
     
-cap = cv2.VideoCapture('../videos/xxx/output.mp4')
+cap = cv2.VideoCapture('../videos/xxx/output2.mp4')
 # setupGPIO(pinsGPIO)
 setterPresent = False
 armPresent = False
@@ -92,19 +116,20 @@ x=0
 x1=0 +x
 y=-0
 y1=0 + y
-crop_ranges = ([300,475,50,580],[0,0,0,0])
+crop_ranges = ([320,475,40,555],[0,0,0,0])
 
 frameNo = 0
 prevFrame = 0
-ballCounter = [0]*3
+ballCounter = 0
 origCounter = 0
 for i in range(0,1):
     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
-ret, frame1 = cap.read()
-mask= frame1[300:475,50:580]
-frame1 = mask
-
+ret, frame = cap.read()
+frame1 = frame[320:475,40:555]
+img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+frame1arm = frame[155:270,540:600]
+img_gray1arm = cv2.cvtColor(frame1arm, cv2.COLOR_BGR2GRAY)
 while(cap.isOpened()):
     ret, frame2 = cap.read()
     try:
@@ -112,32 +137,37 @@ while(cap.isOpened()):
     except:
         print ("New Video")
         cap.release()
-        cap = cv2.VideoCapture('../videos/AAA/video640a.h264')
+        cap = cv2.VideoCapture('../videos/AAA/video640.h264')
         ret, frame2 = cap.read()
     frameNo = frameNo +1
     img_rgb = frame2
-
+   
     if setterPresent:
             if firstSetterFrame + 120 > frameNo:
                 continue
     if armPresent:
-            if firstArmFrame + 120 > frameNo:
+            if firstArmFrame + 200 > frameNo:
                 continue
-            if firstArmFrame+120 == frameNo:
+            if firstArmFrame+ 200 == frameNo:
                 armPresent = False
-
+    if setterPresent or armPresent:
+        continue
     isPinSetter()
-    frame2= frame2[300:475,50:580]
-    img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    isResetArm()
+   
+    frame2= frame2[320:475,40:555]
+    
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1,img_gray2)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(diff, 100,255,cv2.THRESH_BINARY)
     frame = thresh
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    thresh = cv2.medianBlur(thresh,9)
+    thresh = cv2.medianBlur(thresh,11)
+    thresh = cv2.dilate(thresh, None, iterations=2) 
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
+       
     center = None
     radius = 0
     if len(cnts) > 0:
@@ -145,32 +175,35 @@ while(cap.isOpened()):
 		# it to compute the minimum enclosing circle and centroid
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        print('radius', radius, frameNo, len(cnts))
-        ballCounter[0]=0
-        ballCounter[1]=0
-        ballCounter[2]=0
+        print('radius', radius, frameNo,c, len(cnts))
+        if prevFrame + 15 < frameNo:
+                ballCounter = ballCounter + 1
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL")
+                prevFrame = frameNo
 		# only proceed if the radius meets a minimum size
-        if radius > 20:
-            # draw the circle and centroid on the frame,
-            # then update the list of tracked points
-            M = cv2.moments(c)
-            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-            cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
-            if center < (500,200):
-                    print('CENTER',center, radius, frameNo, len(cnts))
+        # if radius > 5:
+        #     # draw the circle and centroid on the frame,
+        #     # then update the list of tracked points
+        #     M = cv2.moments(c)
+        #     center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+        #     cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
+        #     if prevFrame + 15 < frameNo:
+        #         ballCounter = ballCounter + 1
+        #         prevFrame = frameNo
+        #     print('BALL CENTER',center, radius, frameNo, len(cnts), ballCounter)
+            
                     # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
-            else:
-                firstArmFrame = frameNo
-                armPresent = True
+    img_gray1=img_gray2        
     cv2.imshow('Ball', img_gray2)
-    cv2.imshow('Thresh' , thresh)
+    cv2.imshow('Arm', threshArm)
+    # cv2.imshow('Thresh' , thresh)
     tf = findPins()
 
     cv2.rectangle(img_rgb,b, a, 255,2)
 
     cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
-    writeImageSeries(215,10, img_rgb)
-    
+    # writeImageSeries(215,10, img_rgb)
+    writeImageSeries(1335,10, img_rgb)
     key = cv2.waitKey(1) & 0xFF
     
     # if the `q` key was pressed, break from the loop
