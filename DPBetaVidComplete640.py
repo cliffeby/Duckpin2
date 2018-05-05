@@ -97,8 +97,8 @@ def findPins():
  
                 if threshold < sumHist[i]:
                     pinCount = pinCount + 2**(9-i)
-                
-        print('HIST', frameNo, pinCount)
+        if priorPinCount != pinCount:        
+            print('Change', frameNo, priorPinCount, pinCount)
         # bit_GPIO(pinsGPIO,pinCount)
 
         if priorPinCount == pinCount:
@@ -116,7 +116,7 @@ x=0
 x1=0 +x
 y=-0
 y1=0 + y
-crop_ranges = ([320,475,40,555],[0,0,0,0])
+crop_ranges = ([320,480,40,565],[0,0,0,0])
 
 frameNo = 0
 prevFrame = 0
@@ -126,7 +126,7 @@ for i in range(0,1):
     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
 ret, frame = cap.read()
-frame1 = frame[320:475,40:555]
+frame1 = frame[320:480,40:565]
 img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 frame1arm = frame[155:270,540:600]
 img_gray1arm = cv2.cvtColor(frame1arm, cv2.COLOR_BGR2GRAY)
@@ -146,16 +146,17 @@ while(cap.isOpened()):
             if firstSetterFrame + 120 > frameNo:
                 continue
     if armPresent:
-            if firstArmFrame + 200 > frameNo:
+            if firstArmFrame + 120 > frameNo:
                 continue
-            if firstArmFrame+ 200 == frameNo:
+            if firstArmFrame+ 120 == frameNo:
+                ballCounter = 0
                 armPresent = False
     if setterPresent or armPresent:
         continue
     isPinSetter()
     isResetArm()
    
-    frame2= frame2[320:475,40:555]
+    frame2= frame2[320:480,40:565]
     
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1,img_gray2)
@@ -167,18 +168,16 @@ while(cap.isOpened()):
     thresh = cv2.dilate(thresh, None, iterations=2) 
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
-       
-    center = None
-    radius = 0
+
     if len(cnts) > 0:
 		# find the largest contour in the mask, then use
 		# it to compute the minimum enclosing circle and centroid
         c = max(cnts, key=cv2.contourArea)
-        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        print('radius', radius, frameNo,c, len(cnts))
+        # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+        print('Ball Area', frameNo, len(cnts))
         if prevFrame + 15 < frameNo:
                 ballCounter = ballCounter + 1
-                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL")
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter)
                 prevFrame = frameNo
 		# only proceed if the radius meets a minimum size
         # if radius > 5:
@@ -200,10 +199,11 @@ while(cap.isOpened()):
     tf = findPins()
 
     cv2.rectangle(img_rgb,b, a, 255,2)
+    cv2.putText(img_rgb,str(frameNo),(30,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
 
     cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
     # writeImageSeries(215,10, img_rgb)
-    writeImageSeries(1335,10, img_rgb)
+    # writeImageSeries(1335,10, img_rgb)
     key = cv2.waitKey(1) & 0xFF
     
     # if the `q` key was pressed, break from the loop
