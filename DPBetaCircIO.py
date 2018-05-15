@@ -186,6 +186,7 @@ camera.framerate = 32
 camera.resolution = setResolution()
 rawCapture = PiRGBArray(camera, size=setResolution())
 camera.rotation = 180
+#  stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
     # camera.capture('/home/pi/Shared/images/x1image.jpg')
 
 print(camera.resolution)
