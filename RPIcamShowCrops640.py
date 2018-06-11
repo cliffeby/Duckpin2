@@ -17,10 +17,11 @@ frameNo = 0
 mask_crop_ranges = ([300,470,5,450],[0,0,0,0])
 crop_ranges = ([220,246,242,268],[197,223,221,247],[197,223,291,317],[177,203,202,228],[177,203,268,294],
     [177,203,268,294],[160,186,189,215],[161,187,246,272],[161,187,306,332],[160,186,369,395])
-
+arm_crop_ranges = ([160,280,440,480],[0,0,0,0])
 def drawPinRectangles():
     global pin_image
     global crop_ranges
+    global arm_crop_ranges
     global x
     global y   
     # NOTE: crop is img[y: y + h, x: x + w] 
@@ -33,9 +34,9 @@ def drawPinRectangles():
             cv2.putText(pin_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(pin_image,str(b),b,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     if frameNo==11:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/ACombinedMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/CombinedMask.jpg',pin_image)
     else:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/APinMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/PinMask.jpg',pin_image)
 
 def drawBallRectangles():
     global ball_image
@@ -52,13 +53,31 @@ def drawBallRectangles():
         if i == 0:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/AAA/ABallMask.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/BallMask.jpg',ball_image)
+
+def drawArmRectangles():
+    global arm_image
+    global arm_crop_ranges
+    global mx
+    global my
+    # NOTE: crop is img[y: y + h, x: x + w] 
+    # cv2.rectangle is a = (x,y) , b=(x1,y1)
+
+    for i in range(0,1):
+        a =(arm_crop_ranges[i][2]+mx,arm_crop_ranges[i][0]+my)
+        b = (arm_crop_ranges[i][3]+mx, arm_crop_ranges[i][1]+my)
+        cv2.rectangle(ball_image, b, a, 255, 2)
+        if i == 0:
+            cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+            cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/ArmMask.jpg',arm_image)
 
 def detect_motion(camera):
     global frameNo
     global mask
     global pin_image
     global ball_image
+    global arm_image
     
     stream = io.BytesIO()
     camera.capture(stream, format='jpeg', use_video_port=True)
@@ -71,15 +90,17 @@ def detect_motion(camera):
     if frameNo == 9:
         ball_image = image
         drawBallRectangles()
+        arm_image = image
+        drawArmRectangles()
     if frameNo == 10:
         pin_image = image
         drawPinRectangles()
     if frameNo == 11:
         ball_image = image
         drawBallRectangles()
+        drawArmRectangles()
         pin_image = ball_image
         drawPinRectangles()
-
     return True
        
 # initialize the camera and grab a reference to the raw camera capture
