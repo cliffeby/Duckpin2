@@ -14,8 +14,8 @@ from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
 # mask_crop_ranges = ([1100,1700, 220,2800],[0,0,0,0])
-pin_crop_ranges = ([445,515, 755,825],[360,440, 710,755],[370,450, 885,940],[320,385, 655,705],[320,385, 815,875],
-    [330,380, 980,1035],[275,345, 605,665],[275,345, 745,805],[275,345, 895,955],[275,345, 1060,1120])
+pin_crop_ranges =  ([220,246,242,268],[197,223,221,247],[197,223,291,317],[177,203,202,228],[177,203,268,294],
+    [177,203,268,294],[160,186,189,215],[161,187,246,272],[161,187,306,332],[160,186,369,395])
 
 def setResolution():
     resX = 640
@@ -66,7 +66,6 @@ def write_video(stream):
             if not buf:
                 break
            
-        
             output.write(buf)
     iotSend('/tmp/ramdisk/myfile.h264')
             
@@ -215,12 +214,11 @@ armPresent = False
 maskFrame = True
 priorPinCount = 0
 activity = "\r\n"
-x=-50
+x=0
 x1=0 +x
-y=-165
+y=0
 y1=0 + y
-crop_ranges = ([500,900,100,1240],[0,0,0,0])
-# crop_ranges = ([600,900, 110,1400],[0,0,0,0])
+crop_ranges = ([300,470,5,450],[0,0,0,0])
 ballCoords=[0]*100
 frameNo = 0
 prevFrame = 0
@@ -235,8 +233,8 @@ motion_width = 640
 motion_height = 480
 motion_filename = "DPBetaCIOTest"
 for i in range(0,1):
-    a =(int(crop_ranges[i][2]/2)+x,int(crop_ranges[i][0]/2)+y)
-    b = (int(crop_ranges[i][3]/2)+x1, int(crop_ranges[i][1]/2)+y1)
+    a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
+    b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
     camera.framerate = 25
@@ -269,13 +267,13 @@ with picamera.PiCamera() as camera:
             frame1 = frame.array
             # mask= frame1[650:900, 250:1500]
             # mask= frame1[500:900, 100:1240]
-            mask = frame1[250:470, 50:600]
+            mask = frame1[300,470,5,450]
             frame1 = mask
             maskFrame = False
             continue
         frameNo = frameNo +1
         img_rgb = frame2
-        frame1arm = frame2[155:270,540:600]
+        frame1arm = frame2[160,280,440,480]
         img_gray1arm = cv2.cvtColor(frame1arm, cv2.COLOR_BGR2GRAY)
         # cv2.imwrite('../videos/videoCCEFrame'+ str(frameNo) +'.jpg',img_rgb)
         # if pinReactionFlag:
@@ -311,7 +309,7 @@ with picamera.PiCamera() as camera:
         # frame2= frame2[320:480,40:565]
        
         # frame2= frame2[650:900, 250:1500]
-        frame2= frame2[250:470, 50:600]
+        frame2= frame2[300,470,5,450]
         img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(img_gray1,img_gray2)
