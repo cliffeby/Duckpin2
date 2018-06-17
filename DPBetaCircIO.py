@@ -112,7 +112,7 @@ def isResetArm():
     global img_rgb
     global img_gray1arm
     global threshArm
-    frame2arm = img_rgb[155:270,540:600]
+    frame2arm = img_rgb[160:280,440:480]
     img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1arm,img_gray2arm)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
@@ -153,8 +153,8 @@ def findPins():
 
         mask = cv2.inRange(img_rgb,lower_red,upper_red)
         output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
-        threshold1 = 20
-        threshold2 = 20
+        threshold1 = 10
+        threshold2 = 10
         for i in range(0,6):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 hist = cv2.calcHist([crop[i]],[1],None,[4], [10,50])
@@ -267,13 +267,14 @@ with picamera.PiCamera() as camera:
             frame1 = frame.array
             # mask= frame1[650:900, 250:1500]
             # mask= frame1[500:900, 100:1240]
-            mask = frame1[300,470,5,450]
+            mask = frame1[300:470,5:450]
+            # mask = frame1[300,470,5,450]
             frame1 = mask
             maskFrame = False
             continue
         frameNo = frameNo +1
         img_rgb = frame2
-        frame1arm = frame2[160,280,440,480]
+        frame1arm = frame2[160:280,440:480]
         img_gray1arm = cv2.cvtColor(frame1arm, cv2.COLOR_BGR2GRAY)
         # cv2.imwrite('../videos/videoCCEFrame'+ str(frameNo) +'.jpg',img_rgb)
         # if pinReactionFlag:
@@ -309,7 +310,7 @@ with picamera.PiCamera() as camera:
         # frame2= frame2[320:480,40:565]
        
         # frame2= frame2[650:900, 250:1500]
-        frame2= frame2[300,470,5,450]
+        frame2= frame2[300:470,5:450]
         img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(img_gray1,img_gray2)

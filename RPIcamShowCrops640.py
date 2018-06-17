@@ -13,6 +13,12 @@ x=0
 y=0
 frameNo = 0
 
+def setResolution():
+    resX = 640
+    resY = 480
+    res = (int(resX), int(resY))
+    return res
+
 # crop_ranges are y,y1,x,x1 from top left
 mask_crop_ranges = ([300,470,5,450],[0,0,0,0])
 crop_ranges = ([220,246,242,268],[197,223,221,247],[197,223,291,317],[177,203,202,228],[177,203,268,294],
@@ -34,9 +40,9 @@ def drawPinRectangles():
             cv2.putText(pin_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(pin_image,str(b),b,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     if frameNo==11:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/CombinedMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/BCombinedMask.jpg',pin_image)
     else:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/PinMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/BPinMask.jpg',pin_image)
 
 def drawBallRectangles():
     global ball_image
@@ -53,7 +59,7 @@ def drawBallRectangles():
         if i == 0:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/AAA/BallMask.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/BBallMask.jpg',ball_image)
 
 def drawArmRectangles():
     global arm_image
@@ -70,7 +76,7 @@ def drawArmRectangles():
         if i == 0:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/AAA/ArmMask.jpg',arm_image)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/BArmMask.jpg',arm_image)
 
 def detect_motion(camera):
     global frameNo
@@ -107,6 +113,7 @@ def detect_motion(camera):
 
 with picamera.PiCamera() as camera:
     camera.rotation = 180
+    camera.resolution = setResolution()
     stream = picamera.PiCameraCircularIO(camera, seconds=5)
     camera.start_recording(stream, format='h264')
     try:
