@@ -275,7 +275,7 @@ with picamera.PiCamera() as camera:
             continue
         frameNo = frameNo +1
         img_rgb = frame2
-        frame1arm = frame2[160:280,440:480]
+        frame1arm = frame2[71:279,1025:1120]
         img_gray1arm = cv2.cvtColor(frame1arm, cv2.COLOR_BGR2GRAY)
         # cv2.imwrite('../videos/videoCCEFrame'+ str(frameNo) +'.jpg',img_rgb)
         # if pinReactionFlag:
