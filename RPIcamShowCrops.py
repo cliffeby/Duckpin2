@@ -6,39 +6,28 @@ import cv2
 import numpy as np
 import picamera
 from PIL import Image
-print(sys.argv)
-if len(sys.argv) != 2:
-    print('Add parameter "HIGH" or "LOW"')
+
 mx=0
 my=0
-x=-50
-y=-165
+x=0
+y=0
 frameNo = 0
 
-# crop_ranges are y,y1,x,x1 from top left
-mask_crop_ranges = ([500,900,100,1300],[0,0,0,0])
-crop_ranges = ([445,515, 755,825],[360,440, 710,755],[370,450, 885,940],[320,385, 655,705],[320,385, 815,875],
-    [330,380, 980,1035],[275,345, 605,665],[275,345, 745,805],[275,345, 895,955],[275,345, 1060,1120])
-if sys.argv[1]=="LOW":
-    height = 912/480
-    width = 1440/640
-    x = int(x/width)
-    y = int(y/height)
-    mask_crop_ranges[0][0] = int(mask_crop_ranges[0][0]/height)
-    mask_crop_ranges[0][1] = int(mask_crop_ranges[0][1]/height)
-    mask_crop_ranges[0][2] = int(mask_crop_ranges[0][2]/width)
-    mask_crop_ranges[0][3] = int(mask_crop_ranges[0][3]/width)
-    for ii in range(0,10):
-        print('CRB', crop_ranges[ii])
-        crop_ranges[ii][0] = int(crop_ranges[ii][0]/height)
-        crop_ranges[ii][1] = int(crop_ranges[ii][1]/height)
-        crop_ranges[ii][2] = int(crop_ranges[ii][2]/width)
-        crop_ranges[ii][3] = int(crop_ranges[ii][3]/width)
-        print('CRA', crop_ranges[ii])
+def setResolution():
+    resX = 640
+    resY = 480
+    res = (int(resX), int(resY))
+    return res
 
+# crop_ranges are y,y1,x,x1 from top left
+mask_crop_ranges = ([400,897,10,1096],[0,0,0,0])
+crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[218,244,677,703],[167,193,612,638],[168,194,776,802],
+    [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
+arm_crop_ranges = ([71,279,1025,1120],[0,0,0,0])
 def drawPinRectangles():
     global pin_image
     global crop_ranges
+    global arm_crop_ranges
     global x
     global y   
     # NOTE: crop is img[y: y + h, x: x + w] 
@@ -51,9 +40,9 @@ def drawPinRectangles():
             cv2.putText(pin_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(pin_image,str(b),b,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     if frameNo==11:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/ACombinedMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/BCombinedMask.jpg',pin_image)
     else:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/APinMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/BPinMask.jpg',pin_image)
 
 def drawBallRectangles():
     global ball_image
@@ -70,13 +59,31 @@ def drawBallRectangles():
         if i == 0:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/AAA/ABallMask.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/BBallMask.jpg',ball_image)
+
+def drawArmRectangles():
+    global arm_image
+    global arm_crop_ranges
+    global mx
+    global my
+    # NOTE: crop is img[y: y + h, x: x + w] 
+    # cv2.rectangle is a = (x,y) , b=(x1,y1)
+
+    for i in range(0,1):
+        a =(arm_crop_ranges[i][2]+mx,arm_crop_ranges[i][0]+my)
+        b = (arm_crop_ranges[i][3]+mx, arm_crop_ranges[i][1]+my)
+        cv2.rectangle(ball_image, b, a, 255, 2)
+        if i == 0:
+            cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+            cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/BArmMask.jpg',arm_image)
 
 def detect_motion(camera):
     global frameNo
     global mask
     global pin_image
     global ball_image
+    global arm_image
     
     stream = io.BytesIO()
     camera.capture(stream, format='jpeg', use_video_port=True)
@@ -89,27 +96,24 @@ def detect_motion(camera):
     if frameNo == 9:
         ball_image = image
         drawBallRectangles()
+        arm_image = image
+        drawArmRectangles()
     if frameNo == 10:
         pin_image = image
         drawPinRectangles()
     if frameNo == 11:
         ball_image = image
         drawBallRectangles()
+        drawArmRectangles()
         pin_image = ball_image
         drawPinRectangles()
-
     return True
        
 # initialize the camera and grab a reference to the raw camera capture
 
 with picamera.PiCamera() as camera:
-    if sys.argv[1] == 'HIGH':
-        camera.resolution = (1440, 900)
-    if sys.argv[1] == "LOW":
-        camera.resolution = (640,480)
-    # camera.brightness = 45
-    print("SYSARRGV", sys.argv[1])
     camera.rotation = 180
+    # camera.resolution = setResolution()
     stream = picamera.PiCameraCircularIO(camera, seconds=5)
     camera.start_recording(stream, format='h264')
     try:

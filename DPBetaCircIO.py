@@ -14,8 +14,8 @@ from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
 # mask_crop_ranges = ([1100,1700, 220,2800],[0,0,0,0])
-pin_crop_ranges =  ([220,246,242,268],[197,223,221,247],[197,223,291,317],[177,203,202,228],[177,203,268,294],
-    [177,203,268,294],[160,186,189,215],[161,187,246,272],[161,187,306,332],[160,186,369,395])
+pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[218,244,677,703],[167,193,612,638],[168,194,776,802],
+    [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
 
 def setResolution():
     resX = 640
@@ -112,7 +112,7 @@ def isResetArm():
     global img_rgb
     global img_gray1arm
     global threshArm
-    frame2arm = img_rgb[160:280,440:480]
+    frame2arm = img_rgb[71:279,1025:1120]
     img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1arm,img_gray2arm)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
@@ -218,7 +218,7 @@ x=0
 x1=0 +x
 y=0
 y1=0 + y
-crop_ranges = ([300,470,5,450],[0,0,0,0])
+crop_ranges = ([400,897,10,1096],[0,0,0,0])
 ballCoords=[0]*100
 frameNo = 0
 prevFrame = 0
@@ -267,7 +267,8 @@ with picamera.PiCamera() as camera:
             frame1 = frame.array
             # mask= frame1[650:900, 250:1500]
             # mask= frame1[500:900, 100:1240]
-            mask = frame1[300:470,5:450]
+            
+            mask = frame1[400:897,10:1096]
             # mask = frame1[300,470,5,450]
             frame1 = mask
             maskFrame = False
@@ -310,7 +311,7 @@ with picamera.PiCamera() as camera:
         # frame2= frame2[320:480,40:565]
        
         # frame2= frame2[650:900, 250:1500]
-        frame2= frame2[300:470,5:450]
+        frame2= frame2[400:897,10:1096]
         img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(img_gray1,img_gray2)
