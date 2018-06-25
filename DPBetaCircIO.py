@@ -13,15 +13,22 @@ import picamera.array
 from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
-# mask_crop_ranges = ([1100,1700, 220,2800],[0,0,0,0])
-pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[218,244,677,703],[167,193,612,638],[168,194,776,802],
+pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[167,193,451,477],[167,193,612,638],[168,194,776,802],
     [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
+resetArmCrops = [90,300,1020,1030]
+pinSetterCrops = [20,90,400,850]
+ballCrops = [400,890,80,1080]
 
 def setResolution():
-    resX = 640
-    resY = 480
+    resX = 1440  #640
+    resY = 900   #480
     res = (int(resX), int(resY))
     return res
+
+def getCroppedImage(image,crop_array):
+    croppedImage = image[crop_array[0]:crop_array[1],crop_array[2]:crop_array[3]]
+    return croppedImage
+
 def setupGPIO(pins):
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -81,8 +88,7 @@ def isPinSetter():
     global activity
     
     # Convert BGR to HSV
-    # frame = img_rgb[150:450, 650:1600]
-    frame = img_rgb[75:225, 325:800]
+    frame =  getCroppedImage(img_rgb, pinSetterCrops)
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # define range of green color in HSV
     lower_green = numpy.array([65,60,60])
@@ -112,8 +118,11 @@ def isResetArm():
     global img_rgb
     global img_gray1arm
     global threshArm
-    frame2arm = img_rgb[71:279,1025:1120]
+    global resetArmCrops
+    
+    frame2arm = getCroppedImage(img_rgb, resetArmCrops)
     img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+    # print('IMG GRAY ARM', img_gray1arm, img_gray2arm, frame2arm, type(frame2arm))
     diff = cv2.absdiff(img_gray1arm,img_gray2arm)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
     ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
@@ -135,10 +144,10 @@ def isResetArm():
             armPresent = True
             ballCounter = 0
 
-def arm():
-    global firstArmFrame
-    global frameNo
-    firstArmFrame = frameNo
+# def arm():
+#     global firstArmFrame
+#     global frameNo
+#     firstArmFrame = frameNo
 
 def findPins():
         global x,x1,y,y1
@@ -229,8 +238,8 @@ origCounter = 0
 pinReactionTime = 0
 pinReactionFlag = False
 video_preseconds = 3
-motion_width = 640
-motion_height = 480
+motion_width = 1440
+motion_height = 900
 motion_filename = "DPBetaCIOTest"
 for i in range(0,1):
     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
@@ -264,19 +273,19 @@ with picamera.PiCamera() as camera:
         
         frame2 = frame.array
         if maskFrame:
-            frame1 = frame.array
-            # mask= frame1[650:900, 250:1500]
-            # mask= frame1[500:900, 100:1240]
-            
-            mask = frame1[400:897,10:1096]
-            # mask = frame1[300,470,5,450]
+            frame1 = frame.array     
+            img_gray1arm = getCroppedImage(frame1, resetArmCrops)
+            img_gray1arm = cv2.cvtColor(img_gray1arm, cv2.COLOR_BGR2GRAY)
+            mask = getCroppedImage(frame1, ballCrops)
             frame1 = mask
             maskFrame = False
             continue
         frameNo = frameNo +1
         img_rgb = frame2
-        frame1arm = frame2[71:279,1025:1120]
-        img_gray1arm = cv2.cvtColor(frame1arm, cv2.COLOR_BGR2GRAY)
+        frame2arm = getCroppedImage(frame2, resetArmCrops)
+        img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+        # print("Main", type(img_rgb), type(frame2), type(img_gray1arm))
+        
         # cv2.imwrite('../videos/videoCCEFrame'+ str(frameNo) +'.jpg',img_rgb)
         # if pinReactionFlag:
         #     if time.process_time()-3 > pinReactionTime:
@@ -307,11 +316,8 @@ with picamera.PiCamera() as camera:
             continue
         isPinSetter()
         isResetArm()
-   
-        # frame2= frame2[320:480,40:565]
-       
-        # frame2= frame2[650:900, 250:1500]
-        frame2= frame2[400:897,10:1096]
+
+        frame2= getCroppedImage(frame2, ballCrops)
         img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(img_gray1,img_gray2)
@@ -320,6 +326,7 @@ with picamera.PiCamera() as camera:
         frame = thresh
         # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
         thresh = cv2.medianBlur(thresh,13)
+        # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)[-2]
         center = None
@@ -349,7 +356,7 @@ with picamera.PiCamera() as camera:
                         # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
         img_gray1=img_gray2        
         cv2.imshow('Ball', img_gray2)
-        cv2.imshow('Arm', threshArm)
+        # cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
         camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(20, 3, img_rgb)

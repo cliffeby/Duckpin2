@@ -120,6 +120,7 @@ def isResetArm():
     frame = threshArm
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
     threshArm = cv2.medianBlur(threshArm,15)
+    print(type(img_rgb), type(frame2arm), type(threshArm), type(diff),type(img_gray1arm), type(img_gray2arm))
     cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
     center = None
