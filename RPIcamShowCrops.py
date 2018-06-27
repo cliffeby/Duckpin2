@@ -14,8 +14,8 @@ y=0
 frameNo = 0
 
 def setResolution():
-    resX = 640
-    resY = 480
+    resX = 1440
+    resY = 900
     res = (int(resX), int(resY))
     return res
 
@@ -113,7 +113,7 @@ def detect_motion(camera):
 
 with picamera.PiCamera() as camera:
     camera.rotation = 180
-    # camera.resolution = setResolution()
+    camera.resolution = setResolution()
     stream = picamera.PiCameraCircularIO(camera, seconds=5)
     camera.start_recording(stream, format='h264')
     try:
