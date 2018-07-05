@@ -13,8 +13,10 @@ import picamera.array
 from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
-pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[167,193,451,477],[167,193,612,638],[168,194,776,802],
+pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[218,244,677,703],[177,203,451,477],[167,193,612,638],[168,194,776,802],
     [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
+# pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[167,193,451,477],[167,193,612,638],[168,194,776,802],
+#    [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
 resetArmCrops = [71,279,1025,1120]
 pinSetterCrops = [20,90,400,850]
 ballCrops = [400,897,10,1096]
@@ -51,7 +53,7 @@ def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
         if frameNo <= frameNoStart+numberOfFrames:
             print ('Saving ../home/pi/Shared/videos/videoCCEFrame'+ str(frameNo) +'.jpg')
             cv2.imwrite('/home/pi/Shared/videos/videoCCEFrame'+ str(frameNo) +'.jpg',img_rgb)
-
+            drawPinRectangles()
 def write_video(stream):
 # Write the entire content of the circular buffer to disk. No need to
 # lock the stream here as we're definitely not writing to it
@@ -215,7 +217,25 @@ def iotSend(buf):
     except KeyboardInterrupt:
         print ( "IoTHubClient sample stopped" )
 
-    iot.print_last_message_time(client)    
+    iot.print_last_message_time(client)
+
+def drawPinRectangles():
+    global ball_image,img_rgb
+    global pin_crop_ranges
+    mx=0
+    my=0
+    ball_image = img_rgb
+    # NOTE: crop is img[y: y + h, x: x + w] 
+    # cv2.rectangle is a = (x,y) , b=(x1,y1)
+
+    for i in range(0,1):
+        a =(pin_crop_ranges[i][2]+mx,pin_crop_ranges[i][0]+my)
+        b = (pin_crop_ranges[i][3]+mx, pin_crop_ranges[i][1]+my)
+        cv2.rectangle(ball_image, b, a, 255, 2)
+        if i == 0:
+            cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+            cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
 setterPresent = False
@@ -359,8 +379,8 @@ with picamera.PiCamera() as camera:
         # cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
         camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        # writeImageSeries(20, 3, img_rgb)
-        # cv2.imshow('Frame' , img_rgb)
+        writeImageSeries(20, 3, img_rgb)
+        cv2.imshow('Frame' , img_rgb)
         if frameNo%5 ==0:
             tf = findPins()        
 
