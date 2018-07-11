@@ -222,8 +222,8 @@ def iotSend(buf):
 def drawPinRectangles():
     global ball_image,img_rgb
     global pin_crop_ranges
-    mx=0
-    my=0
+    mx=-22
+    my=-14
     ball_image = img_rgb
     # NOTE: crop is img[y: y + h, x: x + w] 
     # cv2.rectangle is a = (x,y) , b=(x1,y1)
@@ -243,9 +243,9 @@ armPresent = False
 maskFrame = True
 priorPinCount = 0
 activity = "\r\n"
-x=0
+x=-22
 x1=0 +x
-y=0
+y=-14
 y1=0 + y
 crop_ranges = ([400,897,10,1096],[0,0,0,0])
 ballCoords=[0]*100
