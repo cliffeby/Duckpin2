@@ -13,8 +13,8 @@ import picamera.array
 from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
-pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[218,244,677,703],[177,203,451,477],[167,193,612,638],[168,194,776,802],
-    [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
+pin_crop_ranges = ([258,284,529,555],[193,219,471,497],[193,219,674,700],[135,161,424,450],[135,161,424,450],[137,163,790,816],
+    [89,115,381,407],[90,116,546,572],[90,116,715,741],[89,115,889,915])
 # pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[167,193,451,477],[167,193,612,638],[168,194,776,802],
 #    [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
 resetArmCrops = [71,279,1025,1120]
@@ -228,14 +228,14 @@ def drawPinRectangles():
     # NOTE: crop is img[y: y + h, x: x + w] 
     # cv2.rectangle is a = (x,y) , b=(x1,y1)
 
-    for i in range(0,1):
+    for i in range(0,9):
         a =(pin_crop_ranges[i][2]+mx,pin_crop_ranges[i][0]+my)
         b = (pin_crop_ranges[i][3]+mx, pin_crop_ranges[i][1]+my)
         cv2.rectangle(ball_image, b, a, 255, 2)
         if i == 0:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
 setterPresent = False
@@ -243,9 +243,9 @@ armPresent = False
 maskFrame = True
 priorPinCount = 0
 activity = "\r\n"
-x=-22
+x=11
 x1=0 +x
-y=-14
+y=0
 y1=0 + y
 crop_ranges = ([400,897,10,1096],[0,0,0,0])
 ballCoords=[0]*100
