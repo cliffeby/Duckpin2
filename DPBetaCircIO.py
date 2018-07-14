@@ -15,8 +15,6 @@ from PIL import Image
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
 pin_crop_ranges = ([258,284,529,555],[193,219,471,497],[193,219,674,700],[135,161,424,450],[135,161,605,631],[137,163,790,816],
     [89,115,381,407],[90,116,546,572],[90,116,715,741],[89,115,889,915])
-# pin_crop_ranges = ([272,298,549,575],[218,244,493,519],[266,292,451,477],[167,193,451,477],[167,193,612,638],[168,194,776,802],
-#    [123,149,418,444],[125,151,564,590],[126,152,709,735],[124,150,867,893])
 resetArmCrops = [71,279,1025,1120]
 pinSetterCrops = [20,90,400,850]
 ballCrops = [400,897,10,1096]
@@ -222,8 +220,8 @@ def iotSend(buf):
 def drawPinRectangles():
     global ball_image,img_rgb
     global pin_crop_ranges
-    mx=-22
-    my=-14
+    mx=11
+    my=0
     ball_image = img_rgb
     # NOTE: crop is img[y: y + h, x: x + w] 
     # cv2.rectangle is a = (x,y) , b=(x1,y1)
@@ -376,7 +374,7 @@ with picamera.PiCamera() as camera:
                         # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
         img_gray1=img_gray2        
         cv2.imshow('Ball', img_gray2)
-        # cv2.imshow('Arm', threshArm)
+        cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
         camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         writeImageSeries(20, 3, img_rgb)
