@@ -58,7 +58,7 @@ def write_video(stream):
 # simultaneously
     global motion_filename, frameNo, videoReadyFrameNo
     
-    if frameNo<videoReadyFrameNo+120:
+    if frameNo < videoReadyFrameNo+120:
         return
     videoReadyFrameNo = frameNo
     print("writng1 ",motion_filename)
@@ -230,7 +230,7 @@ def drawPinRectangles():
         a =(pin_crop_ranges[i][2]+mx,pin_crop_ranges[i][0]+my)
         b = (pin_crop_ranges[i][3]+mx, pin_crop_ranges[i][1]+my)
         cv2.rectangle(ball_image, b, a, 255, 2)
-        if i == 0:
+        if i == 6:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
@@ -241,7 +241,7 @@ armPresent = False
 maskFrame = True
 priorPinCount = 0
 activity = "\r\n"
-x=11
+x=-11
 x1=0 +x
 y=0
 y1=0 + y
