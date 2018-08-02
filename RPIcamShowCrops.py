@@ -9,7 +9,7 @@ from PIL import Image
 
 mx=0
 my=0
-x=-11
+x=11
 y=0
 frameNo = 0
 
