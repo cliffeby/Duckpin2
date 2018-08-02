@@ -17,7 +17,7 @@ pin_crop_ranges = ([258,284,529,555],[193,219,471,497],[193,219,674,700],[135,16
     [89,115,381,407],[90,116,546,572],[90,116,715,741],[89,115,889,915])
 resetArmCrops = [71,279,1025,1120]
 pinSetterCrops = [20,90,400,850]
-ballCrops = [400,897,10,1096]
+ballCrops = [400,897,10,1000]
 
 def setResolution():
     resX = 1440  #640
@@ -62,6 +62,11 @@ def write_video(stream):
         return
     videoReadyFrameNo = frameNo
     print("writng1 ",motion_filename)
+    #setup ram dsk
+     # Wipe the circular stream once we're done
+    stream.seek(0)
+    stream.truncate()
+    return
     with io.open('/tmp/ramdisk/myfile.h264', 'wb') as output:
         for frame in stream.frames:
             if frame.frame_type == picamera.PiVideoFrameType.sps_header:
@@ -111,6 +116,7 @@ def isPinSetter():
         print("Green", area, frameNo)
     else:
         firstSetterFrame = 0
+    return
 
 def isResetArm():
     global firstArmFrame, armPresent, ballCounter
@@ -143,6 +149,7 @@ def isResetArm():
             firstArmFrame = frameNo
             armPresent = True
             ballCounter = 0
+    return
 
 # def arm():
 #     global firstArmFrame
@@ -218,10 +225,10 @@ def iotSend(buf):
     iot.print_last_message_time(client)
 
 def drawPinRectangles():
-    global ball_image,img_rgb
+    global ball_image,img_rgb,x,y
     global pin_crop_ranges
-    mx=11
-    my=0
+    mx=x
+    my=y
     ball_image = img_rgb
     # NOTE: crop is img[y: y + h, x: x + w] 
     # cv2.rectangle is a = (x,y) , b=(x1,y1)
@@ -233,7 +240,7 @@ def drawPinRectangles():
         if i == 6:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask1'+str(i) +'.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
 setterPresent = False
@@ -241,9 +248,9 @@ armPresent = False
 maskFrame = True
 priorPinCount = 0
 activity = "\r\n"
-x=-11
+x=0
 x1=0 +x
-y=0
+y=5
 y1=0 + y
 crop_ranges = ([400,897,10,1096],[0,0,0,0])
 ballCoords=[0]*100
@@ -322,12 +329,16 @@ with picamera.PiCamera() as camera:
         #             armPresent = False
         #             activity = activity + str(priorPinCount)+ ',-1,'
         if setterPresent:
-                if firstSetterFrame + 120 > frameNo:
+                if firstSetterFrame + 25 > frameNo:
+                    print('SetterPresent', frameNo, ballCounter)
                     continue
+                if firstSetterFrame + 25 == frameNo:
+                    setterPresent = False
         if armPresent:
-            if firstArmFrame + 120 > frameNo:
+            if firstArmFrame + 25 > frameNo:
+                print ('ArmPresent', frameNo, ballCounter)
                 continue
-            if firstArmFrame+ 120 == frameNo:
+            if firstArmFrame+ 25 == frameNo:
                 ballCounter = 0
                 armPresent = False
         if setterPresent or armPresent:
@@ -373,12 +384,12 @@ with picamera.PiCamera() as camera:
                 
                         # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
         img_gray1=img_gray2        
-        cv2.imshow('Ball', img_gray2)
-        cv2.imshow('Arm', threshArm)
+        # cv2.imshow('Ball', img_gray2)
+        # cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
         camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         writeImageSeries(20, 3, img_rgb)
-        cv2.imshow('Frame' , img_rgb)
+        # cv2.imshow('Frame' , img_rgb)
         if frameNo%5 ==0:
             tf = findPins()        
 
