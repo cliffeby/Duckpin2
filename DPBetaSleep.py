@@ -143,7 +143,7 @@ def isResetArm():
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
         if radius>15:
-            print('Reset Arm', radius, frameNo, len(cnts))
+            print('Reset Arm', radius, frameNo, len(cnts), ballCounter)
             armPresent = True
             ballCounter = 0
     return
@@ -167,7 +167,7 @@ def findPins():
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 hist = cv2.calcHist([crop[i]],[1],None,[4], [10,50])
                 sumHist[i] = hist[0]+hist[1]+hist[2]+hist[3]
-                print (i, sumHist[i])
+                # print (i, sumHist[i])
                 if threshold1 < sumHist[i]:
                     pinCount = pinCount + 2**(9-i)
         # for i in range(6,10):
@@ -180,12 +180,13 @@ def findPins():
         #         if threshold2 < sumHist[i]:
         #             pinCount = pinCount + 2**(9-i)
                 
-        print('HIST', frameNo, pinCount)
+        # print('HIST', frameNo, pinCount)
         bit_GPIO(pinsGPIO,pinCount)
 
         if priorPinCount == pinCount:
             return False
         else:
+            print("Changed")
             write_video(stream)
             priorPinCount = pinCount
             return True
@@ -230,7 +231,13 @@ def drawPinRectangles():
         if i == 6:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask1'+str(i) +'.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/CCEPinMask'+str(i) +'.jpg',ball_image)
+    a = (ballCrops[2]+mx,ballCrops[0]+my)
+    b = (ballCrops[3]+mx, ballCrops[1]+my)
+    cv2.rectangle(ball_image, b, a, 255, 2)
+    cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
 setterPresent = False
@@ -256,9 +263,9 @@ video_preseconds = 3
 motion_width = 1440
 motion_height = 900
 motion_filename = "DPBetaCIOTest"
-for i in range(0,1):
-    a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
-    b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
+# for i in range(0,1):
+#     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
+#     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
     camera.framerate = 25
@@ -303,14 +310,14 @@ with picamera.PiCamera() as camera:
         isPinSetter()   #Deadwood
         if setterPresent:
             print('SetterPresent', frameNo, ballCounter)
-            time.sleep(5)
+            time.sleep(9)
             setterPresent = False
             continue
         
         isResetArm()    #Reset
         if armPresent:
             print ('ArmPresent', frameNo, ballCounter)
-            time.sleep(5)
+            time.sleep(9)
             armPresent = False
             continue
 
@@ -334,7 +341,7 @@ with picamera.PiCamera() as camera:
             c = max(cnts, key=cv2.contourArea)
             # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
             print('Ball Area', frameNo, len(cnts))
-            if prevFrame + 15 < frameNo:
+            if prevFrame + 5 < frameNo:
                     ballCounter = ballCounter + 1
                     print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter)
                     prevFrame = frameNo
@@ -355,8 +362,10 @@ with picamera.PiCamera() as camera:
         # cv2.imshow('Ball', img_gray2)
         # cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
-        camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        writeImageSeries(20, 3, img_rgb)
+       
+        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
+        # writeImageSeries(20, 3, img_rgb)
+       
         # cv2.imshow('Frame' , img_rgb)
         if frameNo%5 ==0:
             findPins()        
