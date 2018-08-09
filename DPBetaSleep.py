@@ -65,10 +65,8 @@ def write_video(stream):
     print("writng1 ",motion_filename)
     #setup ram dsk
      # Wipe the circular stream once we're done
-    stream.seek(0)
-    stream.truncate()
-    return
-    with io.open('/tmp/ramdisk/myfile.h264', 'wb') as output:
+
+    with io.open('/dp/log/firstFile.h264', 'wb') as output:
         for frame in stream.frames:
             if frame.frame_type == picamera.PiVideoFrameType.sps_header:
                 stream.seek(frame.position)
@@ -80,7 +78,7 @@ def write_video(stream):
                 break
            
             output.write(buf)
-    iotSend('/tmp/ramdisk/myfile.h264')
+    iotSend('/dp/log/firstFile.h264')
             
     # Wipe the circular stream once we're done
     stream.seek(0)
@@ -262,7 +260,7 @@ pinReactionFlag = False
 video_preseconds = 3
 motion_width = 1440
 motion_height = 900
-motion_filename = "DPBetaCIOTest"
+motion_filename = "MotionFileName"
 # for i in range(0,1):
 #     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
 #     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
@@ -338,7 +336,7 @@ with picamera.PiCamera() as camera:
         if len(cnts) > 0:
                 # find the largest contour in the mask, then use
             # it to compute the minimum enclosing circle and centroid
-            c = max(cnts, key=cv2.contourArea)
+            # c = max(cnts, key=cv2.contourArea)
             # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
             print('Ball Area', frameNo, len(cnts))
             if prevFrame + 5 < frameNo:

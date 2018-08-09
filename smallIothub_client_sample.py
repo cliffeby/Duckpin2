@@ -46,6 +46,17 @@ CONNECTION_STRING = credentials.loginFree["ConnectionString"]
 
 MSGLane4_TXT = "{\"deviceId\": \"myPythonDevice\",\"PinsCCC\": \"% i,\"}"
 
+file = open("/home/pi/Shared/videos/bffl43.h264", "rb+")
+# f = open("C:/Users/cliff/OneDrive/pyProjects/feb28/bffl28.h264", "rb+")
+content = file.read()
+print("CONTENT READ LENgth", len(content))
+file.close
+path = '/dp/log/firstFile.h264'
+file = open(path,'wb')
+file.write(content)
+file.close
+
+
 def receive_message_callback(message, counter):
     global RECEIVE_CALLBACKS
     message_buffer = message.get_bytearray()
@@ -144,8 +155,9 @@ def iothub_client_sample_run():
             print ( "IoTHubClient is reporting state" )
             reported_state = "{\"newState\":\"standBy\"}"
             client.send_reported_state(reported_state, len(reported_state), send_reported_state_callback, SEND_REPORTED_STATE_CONTEXT)
-            filename = "vidforblob159.h264"
-            f = open("C:/Users/cliff/OneDrive/pyProjects/feb28/bffl28.h264", "rb+")
+            filename = "vidforblob159FirstRam.h264"
+            f = open('/dp/log/firstFile.h264', "rb+")
+            # f = open("C:/Users/cliff/OneDrive/pyProjects/feb28/bffl28.h264", "rb+")
             content = f.read()
             print("CONTENT LEN", len(content))
             client.upload_blob_async(filename,content, len(content), blob_upload_conf_callback,1001)
