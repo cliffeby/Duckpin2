@@ -60,10 +60,10 @@ def write_video(stream,result):
 # lock the stream here as we're definitely not writing to it
 # simultaneously
     global frameNo, videoReadyFrameNo
-    if frameNo < videoReadyFrameNo+120:
+    if frameNo < videoReadyFrameNo + 120:
         return
     videoReadyFrameNo = frameNo
-    print("writng1 ", motion_filename)
+    print("writng dp ", result)
     #setup ram dsk
      # Wipe the circular stream once we're done
     with io.open('/dp/log/firstFile.h264', 'wb') as output:
@@ -119,6 +119,7 @@ def isResetArm():
     global img_gray1arm
     global threshArm
     global resetArmCrops
+    global priorPinCount
     
     frame2arm = getCroppedImage(img_rgb, resetArmCrops)
     img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
@@ -139,7 +140,7 @@ def isResetArm():
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
         if radius>15:
-            print('Reset Arm', radius, frameNo, len(cnts), ballCounter)
+            print('Reset Arm', radius, frameNo, len(cnts), ballCounter, " ", priorPinCount)
             armPresent = True
             ballCounter = 0
     return
@@ -149,9 +150,11 @@ def findPins():
         global priorPinCount
         global img_rgb
         global frame2
+        global pinsFalling, timesup
         def timeout():
             global timesup
             timesup = False
+            print (timesup)
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
@@ -171,7 +174,8 @@ def findPins():
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-
+        if frameNo%200 ==0:
+            write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
         if priorPinCount == pinCount:
             return
         else:
@@ -200,7 +204,7 @@ def iotSend(buf, result):
         reported_state = "{\"newState\":\"standBy\"}"
         td = datetime.now()
         client.send_reported_state(reported_state, len(reported_state), iot.send_reported_state_callback, iot.SEND_REPORTED_STATE_CONTEXT)
-        filename = "dp" + td.ctime + result + ".h264"
+        filename = "dp" + result +"_" + td.ctime() + ".h264"
         f = open(buf, "rb+")
         content = f.read()
         
@@ -245,6 +249,8 @@ setterPresent = False
 armPresent = False
 maskFrame = True
 priorPinCount = 0
+pinsFalling = False
+timesup = True
 activity = "\r\n"
 x=0
 x1=0 +x
@@ -363,7 +369,7 @@ with picamera.PiCamera() as camera:
         # cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
        
-        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
+        camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(20, 3, img_rgb)
        
         # cv2.imshow('Frame' , img_rgb)
