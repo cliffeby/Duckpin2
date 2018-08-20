@@ -9,17 +9,16 @@ import Iothub_client_functions as iot
 import picamera
 import io
 import threading
-# from picamera import PiCamera, Color
+import cropdata
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
-pin_crop_ranges = ([258,284,529,555],[193,219,471,497],[193,219,674,700],[135,161,424,450],[135,161,605,631],[137,163,790,816],
-    [89,115,381,407],[90,116,546,572],[90,116,715,741],[89,115,889,915])
-resetArmCrops = [71,279,1025,1120]
-pinSetterCrops = [20,90,400,850]
-ballCrops = [400,897,10,1000]
+pin_crop_ranges = cropdata.pin_crop_ranges
+resetArmCrops = cropdata.resetArmCrops
+pinSetterCrops = cropdata.pinSetterCrops
+ballCrops = cropdata.ballCrops
 
 def setResolution():
     resX = 1440  #640
@@ -150,11 +149,11 @@ def findPins():
         global priorPinCount
         global img_rgb
         global frame2
-        global pinsFalling, timesup
+        global pinsFalling, timesup  # initial values False, True
         def timeout():
             global timesup
-            timesup = False
-            print (timesup)
+            timesup = True
+            print ('Timer is finished', timesup)
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
@@ -164,7 +163,6 @@ def findPins():
         mask = cv2.inRange(img_rgb,lower_red,upper_red)
         output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
         threshold1 = 10
-        threshold2 = 10
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 hist = cv2.calcHist([crop[i]],[1],None,[4], [10,50])
@@ -180,16 +178,18 @@ def findPins():
             return
         else:
             if pinsFalling == True:
-                if timesup == True:
+                if timesup == False:
+                    return
+                else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount)
-                    print('Changed Old: ', priorPinCount, 'New ',  pinCount, 'Result ',result)
+                    print('Changed Old: ', priorPinCount, 'New ',  pinCount, 'Result ', result, 'Timers ', threading.active_count)
                     write_video(stream, result)
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
                 return
             pinsFalling = True
-            t = threading.Timer(3.0, timeout)
+            t = threading.Timer(1.5, timeout)
             t.start() # after 3.0 seconds, stearm will be saved
             print ('timer is running')
             return
@@ -256,7 +256,7 @@ x=0
 x1=0 +x
 y=5
 y1=0 + y
-crop_ranges = ([400,897,10,1096],[0,0,0,0])
+# crop_ranges = ([400,897,10,1096],[0,0,0,0])
 ballCoords=[0]*100
 frameNo = 0
 prevFrame = 0
@@ -373,7 +373,7 @@ with picamera.PiCamera() as camera:
         # writeImageSeries(20, 3, img_rgb)
        
         # cv2.imshow('Frame' , img_rgb)
-        if frameNo%5 ==0:
+        if frameNo%2 ==0:
             findPins()        
 
         # cv2.rectangle(img_rgb,b, a, 255,2)
