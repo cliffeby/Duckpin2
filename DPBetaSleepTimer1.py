@@ -175,6 +175,7 @@ def findPins():
         if frameNo%200 ==0:
             write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
         if priorPinCount <= pinCount:
+            priorPinCount = pinCount
             return
         else:
             if pinsFalling == True:
@@ -189,11 +190,10 @@ def findPins():
                     return
                 return
             pinsFalling = True
-            t = threading.Timer(1.5, timeout)
-            t.start() # after 3.0 seconds, stearm will be saved
-            print ('timer is running')
+            t = threading.Timer(1.0, timeout)
+            t.start() # after 1.0 seconds, stream will be saved
+            print ('timer is running', priorPinCount, pinCount)
             return
-
 
 def iotSend(buf, result):
     global frameNo
