@@ -178,6 +178,7 @@ def findPins():
         # if priorPinCount <= pinCount:
         #     priorPinCount = pinCount
         #     return
+        priorPinCount = pinCount
         # else:
         #     if pinsFalling == True:
         #         if timesup == False:
