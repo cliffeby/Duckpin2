@@ -364,7 +364,7 @@ with picamera.PiCamera() as camera:
             #     print('BALL CENTER',center, radius, frameNo, len(cnts), ballCounter)
                 
                         # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
-        img_gray1=img_gray2        
+        #img_gray1=img_gray2        
         # cv2.imshow('Ball', img_gray2)
         # cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
