@@ -138,7 +138,7 @@ def isResetArm():
 		# it to compute the minimum enclosing circle and centroid
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        if radius>15:
+        if radius > 15:
             print('Reset Arm', radius, frameNo, len(cnts), ballCounter, " ", priorPinCount)
             armPresent = True
             ballCounter = 0
@@ -146,7 +146,7 @@ def isResetArm():
 
 def findPins():
         global x,x1,y,y1
-        global priorPinCount
+        global priorPinCount, frameNo
         global img_rgb
         global frame2
         global pinsFalling, timesup  # initial values False, True
@@ -172,13 +172,15 @@ def findPins():
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-        
+        if priorPinCount <= pinCount:
+            print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount ) 
+            priorPinCount = pinCount    
         # if frameNo%200 ==0:
         #     write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
         # if priorPinCount <= pinCount:
         #     priorPinCount = pinCount
         #     return
-        priorPinCount = pinCount
+        
         # else:
         #     if pinsFalling == True:
         #         if timesup == False:
@@ -371,7 +373,7 @@ with picamera.PiCamera() as camera:
         # cv2.imshow('Arm', threshArm)
         # cv2.imshow('Thresh' , thresh)
        
-        camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
+        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(20, 3, img_rgb)
        
         # cv2.imshow('Frame' , img_rgb)
