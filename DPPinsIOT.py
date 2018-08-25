@@ -280,8 +280,8 @@ with picamera.PiCamera() as camera:
     camera.rotation = 180
     rawCapture = PiRGBArray(camera, size=camera.resolution)
         # setup a circular buffer
-    # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
-    stream = picamera.PiCameraCircularIO(camera, size = 4000000)
+    stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
+    # stream = picamera.PiCameraCircularIO(camera, size = 4000000)
     # video recording into circular buffer from splitter port 1
     camera.start_recording(stream, format='h264', splitter_port=1)
         #camera.start_recording('test.h264', splitter_port=1)
