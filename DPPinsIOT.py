@@ -191,8 +191,8 @@ def findPins():
                     return
                 return
             pinsFalling = True
-            t = threading.Timer(1.0, timeout)
-            t.start() # after 1.0 seconds, stream will be saved
+            t = threading.Timer(1.5, timeout)
+            t.start() # after 1.5 seconds, stream will be saved
             print ('timer is running', priorPinCount, pinCount)
             return
 
