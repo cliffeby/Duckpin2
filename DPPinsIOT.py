@@ -71,8 +71,8 @@ def write_video(stream,result):
                 stream.seek(frame.position)
                 break
         while True:
-            # buf = stream.read1()
-            buf = stream.copy_to(seconds=3, first_frame = None)
+            buf = stream.read1(2000000)
+            # buf = stream.copy_to(seconds=3, first_frame = None)
             if not buf:
                 break
             output.write(buf)
