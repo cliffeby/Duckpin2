@@ -71,7 +71,8 @@ def write_video(stream,result):
                 stream.seek(frame.position)
                 break
         while True:
-            buf = stream.read1()
+            # buf = stream.read1()
+            buf = stream.copy_to(seconds=3, first_frame = None)
             if not buf:
                 break
             output.write(buf)
@@ -289,7 +290,7 @@ with picamera.PiCamera() as camera:
     # camera.start_recording('/dev/null', splitter_port=2, resize=(motion_width,motion_height) ,format='h264')
         # wait some seconds for stable video data
     camera.wait_recording(2, splitter_port=1)
-    motion_detected = False
+    # motion_detected = False
 
     print(camera.resolution)
     # time.sleep(1)
