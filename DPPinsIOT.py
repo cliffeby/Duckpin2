@@ -172,8 +172,8 @@ def findPins():
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-        if frameNo%200 ==0:
-            write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
+        # if frameNo%200 ==0:
+        #     write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
         if priorPinCount <= pinCount:
             priorPinCount = pinCount
             return

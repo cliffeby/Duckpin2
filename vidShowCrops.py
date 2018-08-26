@@ -1,8 +1,11 @@
 # import the necessary packages
 import io
 import time
-import cv2
+
 import numpy as np
+
+import cv2
+
 # import picamera
 # from PIL import Image
 
@@ -32,9 +35,10 @@ def drawPinRectangles():
             cv2.putText(pin_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(pin_image,str(b),b,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     if frameNo==11:
-        cv2.imwrite('../videos/AAA/AVidCombinedMask.jpg',pin_image)
+        cv2.imwrite('C:/Users/cliff/OneDrive/pyProjects/videos/AAA1/AVidCombinedMask.jpg',pin_image)
+        print ('C:/Users/cliff/OneDrive/pyProjects/videos/AAA1/AVidCombinedMask.jpg')
     else:
-        cv2.imwrite('../videos/AAA/AVidPinMask.jpg',pin_image)
+        cv2.imwrite('C:/Users/cliff/OneDrive/pyProjects/videos/AAA1/AVidPinMask.jpg',pin_image)
 
 def drawBallRectangles():
     global ball_image
@@ -51,7 +55,7 @@ def drawBallRectangles():
         if i == 0:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('../videos/AAA/AVidBallMask.jpg',ball_image)
+    cv2.imwrite('C:/Users/cliff/OneDrive/pyProjects/videos/AAA1/AVidBallMask.jpg',ball_image)
 
 def detect_motion():
     global frameNo
@@ -79,9 +83,10 @@ def detect_motion():
     return True
        
 # initialize the camera and grab a reference to the raw camera capture
-cap = cv2.VideoCapture('../videos/AAA/video640.h264')
+cap = cv2.VideoCapture('C:/Users/cliff/OneDrive/pyProjects/AAA/dp.h264')
 while(cap.isOpened()):
     ret, frame2 = cap.read()
+    print (frameNo)
     if frameNo<15:
        detect_motion()
     else:

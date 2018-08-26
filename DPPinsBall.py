@@ -172,9 +172,10 @@ def findPins():
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-        if priorPinCount <= pinCount:
-            print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount ) 
-            priorPinCount = pinCount    
+        if priorPinCount <= pinCount: 
+            priorPinCount = pinCount 
+        else:
+            print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )   
         # if frameNo%200 ==0:
         #     write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
         # if priorPinCount <= pinCount:
@@ -379,7 +380,7 @@ with picamera.PiCamera() as camera:
         # cv2.imshow('Frame' , img_rgb)
         # if frameNo%2 ==0:
         findPins()  
-        print("FrameNo ", frameNo, "PinCount", priorPinCount )     
+        # print("FrameNo ", frameNo, "PinCount", priorPinCount )     
 
         # cv2.rectangle(img_rgb,b, a, 255,2)
 
