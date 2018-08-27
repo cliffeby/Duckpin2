@@ -173,9 +173,11 @@ def findPins():
 
         bit_GPIO(pinsGPIO,pinCount)
         if priorPinCount <= pinCount: 
-            priorPinCount = pinCount 
+            priorPinCount = pinCount
+            return 
         else:
-            print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )   
+             
+             
         # if frameNo%200 ==0:
         #     write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
         # if priorPinCount <= pinCount:
@@ -183,22 +185,23 @@ def findPins():
         #     return
         
         # else:
-        #     if pinsFalling == True:
-        #         if timesup == False:
-        #             return
-        #         else:
-        #             result = " _"+ str(priorPinCount)+"_" + str(pinCount)
-        #             print('Changed Old: ', priorPinCount, 'New ',  pinCount, 'Result ', result, 'Timers ', threading.active_count)
-        #             write_video(stream, result)
-        #             priorPinCount = pinCount
-        #             pinsFalling = False
-        #             return
-        #         return
-        #     pinsFalling = True
-        #     t = threading.Timer(1.0, timeout)
-        #     t.start() # after 1.0 seconds, stream will be saved
-        #     print ('timer is running', priorPinCount, pinCount)
-        #     return
+            if pinsFalling == True:
+                if timesup == False:
+                    return
+                else:
+                    result = " _"+ str(priorPinCount)+"_" + str(pinCount)
+                    print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )
+                    # print('Changed Old: ', priorPinCount, 'New ',  pinCount, 'Result ', result, 'Timers ', threading.active_count)
+                    # write_video(stream, result)
+                    priorPinCount = pinCount
+                    pinsFalling = False
+                    return
+                return
+        pinsFalling = True
+        t = threading.Timer(1.0, timeout)
+        t.start() # after 1.0 seconds, stream will be saved
+        print ('timer is running', priorPinCount, pinCount)
+        return
 
 def iotSend(buf, result):
     global frameNo
@@ -261,8 +264,7 @@ x=0
 x1=0 +x
 y=5
 y1=0 + y
-# crop_ranges = ([400,897,10,1096],[0,0,0,0])
-ballCoords=[0]*100
+# ballCoords=[0]*100
 frameNo = 0
 prevFrame = 0
 ballCounter = 0
@@ -279,7 +281,7 @@ motion_height = 900
 #     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
-    camera.framerate = 25
+    # camera.framerate = 25
     camera.video_stabilization = True
     camera.annotate_background = True
     camera.rotation = 180
@@ -294,7 +296,7 @@ with picamera.PiCamera() as camera:
     # camera.start_recording('/dev/null', splitter_port=2, resize=(motion_width,motion_height) ,format='h264')
         # wait some seconds for stable video data
     camera.wait_recording(2, splitter_port=1)
-    motion_detected = False
+    # motion_detected = False
 
     print(camera.resolution)
     # time.sleep(1)
@@ -344,8 +346,8 @@ with picamera.PiCamera() as camera:
         # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)[-2]
-        center = None
-        radius = 0
+        # center = None
+        # radius = 0
         if len(cnts) > 0:
                 # find the largest contour in the mask, then use
             # it to compute the minimum enclosing circle and centroid
