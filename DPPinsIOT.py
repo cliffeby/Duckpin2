@@ -147,7 +147,7 @@ def isResetArm():
 
 def findPins():
         global x,x1,y,y1
-        global priorPinCount
+        global priorPinCount, setterPresent, armPresent
         global img_rgb
         global frame2
         global pinsFalling, timesup  # initial values False, True
@@ -179,10 +179,15 @@ def findPins():
             priorPinCount = pinCount
             return
         else:
+            if setterPresent:
+                return
+            if armPresent:
+                priorPinCount = 1023
+                return
             if pinsFalling == True:
                 if timesup == False:
                     return
-                else:
+                elif priorPinCount == 1023:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount)
                     print('Changed Old: ', priorPinCount, 'New ',  pinCount, 'Result ', result, 'Timers ', threading.active_count)
                     write_video(stream, result)
