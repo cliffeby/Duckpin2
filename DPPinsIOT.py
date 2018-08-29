@@ -21,8 +21,8 @@ pinSetterCrops = cropdata.pinSetterCrops
 ballCrops = cropdata.ballCrops
 
 def setResolution():
-    resX = 1440  #640
-    resY = 900   #480
+    resX = 1024  #640, 1400
+    resY = 768   #480, 900
     res = (int(resX), int(resY))
     return res
 
@@ -81,6 +81,11 @@ def write_video(stream,result):
     # Wipe the circular stream once we're done
     stream.seek(0)
     stream.truncate()
+
+def write_video1(stream, result):
+    camera.wait_recording(2)
+    stream.copy_to('/dp/log/firstFile.h264')
+    iotSend('/dp/log/firstFile.h264',result)
 
 def isPinSetter():
     global setterPresent
@@ -147,6 +152,7 @@ def isResetArm():
 
 def findPins():
         global x,x1,y,y1
+        global camera, stream
         global priorPinCount, setterPresent, armPresent
         global img_rgb
         global frame2
@@ -190,13 +196,14 @@ def findPins():
                 elif priorPinCount == 1023:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount)
                     print('Changed Old: ', priorPinCount, 'New ',  pinCount, 'Result ', result, 'Timers ', threading.active_count)
-                    write_video(stream, result)
+                    # camera.wait_recording(2, splitter_port=1)
+                    write_video1(stream, result)
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
                 return
             pinsFalling = True
-            t = threading.Timer(2.0, timeout)
+            t = threading.Timer(0.1, timeout)
             t.start() # after 2 seconds, stream will be saved
             print ('timer is running', priorPinCount, pinCount)
             return
@@ -273,13 +280,14 @@ origCounter = 0
 pinReactionTime = 0
 pinReactionFlag = False
 video_preseconds = 3
-motion_width = 1440
-motion_height = 900
+# motion_width = 1440
+# motion_height = 900
 # for i in range(0,1):
 #     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
 #     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
+    print(camera.resolution)
     camera.framerate = 25
     camera.video_stabilization = True
     camera.annotate_background = True
@@ -297,7 +305,7 @@ with picamera.PiCamera() as camera:
     camera.wait_recording(2, splitter_port=1)
     # motion_detected = False
 
-    print(camera.resolution)
+    
     # time.sleep(1)
     for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=True):
         # grab the raw NumPy array representing the image, then initialize the timestamp
