@@ -5,11 +5,13 @@ import time
 import cv2
 import numpy as np
 import picamera
+import cropdata1024
+import cropdata1440
 from PIL import Image
 
 mx=0
 my=0
-x=11
+x=0
 y=0
 frameNo = 0
 
@@ -20,10 +22,9 @@ def setResolution():
     return res
 
 # crop_ranges are y,y1,x,x1 from top left
-mask_crop_ranges = ([400,897,10,1096],[0,0,0,0])
-crop_ranges = ([258,284,529,555],[193,219,471,497],[193,219,674,700],[135,161,424,450],[135,161,605,631],[137,163,790,816],
-    [89,115,381,407],[90,116,546,572],[90,116,715,741],[89,115,889,915])
-arm_crop_ranges = ([71,279,1025,1120],[0,0,0,0])
+mask_crop_ranges = cropdata1440.ballCrops
+crop_ranges = cropdata1440.pin_crop_ranges
+arm_crop_ranges = cropdata1440.resetArmCrops
 def drawPinRectangles():
     global pin_image
     global crop_ranges
@@ -52,13 +53,13 @@ def drawBallRectangles():
     # NOTE: crop is img[y: y + h, x: x + w] 
     # cv2.rectangle is a = (x,y) , b=(x1,y1)
 
-    for i in range(0,1):
-        a =(mask_crop_ranges[i][2]+mx,mask_crop_ranges[i][0]+my)
-        b = (mask_crop_ranges[i][3]+mx, mask_crop_ranges[i][1]+my)
-        cv2.rectangle(ball_image, b, a, 255, 2)
-        if i == 0:
-            cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-            cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    
+    a =(mask_crop_ranges[2]+mx,mask_crop_ranges[0]+my)
+    b = (mask_crop_ranges[3]+mx, mask_crop_ranges[1]+my)
+    cv2.rectangle(ball_image, b, a, 255, 2)
+    
+    cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/AAA/BBallMask.jpg',ball_image)
 
 def drawArmRectangles():
@@ -69,13 +70,12 @@ def drawArmRectangles():
     # NOTE: crop is img[y: y + h, x: x + w] 
     # cv2.rectangle is a = (x,y) , b=(x1,y1)
 
-    for i in range(0,1):
-        a =(arm_crop_ranges[i][2]+mx,arm_crop_ranges[i][0]+my)
-        b = (arm_crop_ranges[i][3]+mx, arm_crop_ranges[i][1]+my)
-        cv2.rectangle(ball_image, b, a, 255, 2)
-        if i == 0:
-            cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-            cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    
+    a =(arm_crop_ranges[2]+mx,arm_crop_ranges[0]+my)
+    b = (arm_crop_ranges[3]+mx, arm_crop_ranges[1]+my)
+    cv2.rectangle(ball_image, b, a, 255, 2)
+    cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/AAA/BArmMask.jpg',arm_image)
 
 def detect_motion(camera):

@@ -55,7 +55,7 @@ def drawBallRectangles():
         if i == 0:
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('C:/Users/cliff/OneDrive/pyProjects/videos/AAA1/AVidBallMask.jpg',ball_image)
+    cv2.imwrite('C:/Users/cliff/OneDrive/pyProjects/videos/AAA/AVidBallMask.jpg',ball_image)
 
 def detect_motion():
     global frameNo
@@ -83,11 +83,12 @@ def detect_motion():
     return True
        
 # initialize the camera and grab a reference to the raw camera capture
-cap = cv2.VideoCapture('C:/Users/cliff/OneDrive/pyProjects/AAA/dp.h264')
+cap = cv2.VideoCapture('C:/Users/cliff/OneDrive/pyProjects/videos/video0e.h264')
 while(cap.isOpened()):
     ret, frame2 = cap.read()
+    cv2.imshow('eee',frame2)
     print (frameNo)
-    if frameNo<15:
+    if frameNo<1500:
        detect_motion()
     else:
         print("Complete.  Images in videos/AAA")
