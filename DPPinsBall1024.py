@@ -9,20 +9,20 @@ import Iothub_client_functions as iot
 import picamera
 import io
 import threading
-import cropdata
+import cropdata1024
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
-pin_crop_ranges = cropdata.pin_crop_ranges
-resetArmCrops = cropdata.resetArmCrops
-pinSetterCrops = cropdata.pinSetterCrops
-ballCrops = cropdata.ballCrops
+pin_crop_ranges = cropdata1024.pin_crop_ranges
+resetArmCrops = cropdata1024.resetArmCrops
+pinSetterCrops = cropdata1024.pinSetterCrops
+ballCrops = cropdata1024.ballCrops
 
 def setResolution():
-    resX = 1440  #640
-    resY = 912   #480
+    resX = 1024  #640
+    resY = 768  #480
     res = (int(resX), int(resY))
     return res
 
