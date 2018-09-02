@@ -9,20 +9,20 @@ import Iothub_client_functions as iot
 import picamera
 import io
 import threading
-import cropdata
+import cropdata1440
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
-pin_crop_ranges = cropdata.pin_crop_ranges
-resetArmCrops = cropdata.resetArmCrops
-pinSetterCrops = cropdata.pinSetterCrops
-ballCrops = cropdata.ballCrops
+pin_crop_ranges = cropdata1440.pin_crop_ranges
+resetArmCrops = cropdata1440.resetArmCrops
+pinSetterCrops = cropdata1440.pinSetterCrops
+ballCrops = cropdata1440.ballCrops
 
 def setResolution():
     resX = 1440  #640
-    resY = 912   #480
+    resY = 900  #480
     res = (int(resX), int(resY))
     return res
 
@@ -172,36 +172,25 @@ def findPins():
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-        if priorPinCount <= pinCount: 
-            priorPinCount = pinCount
-            return 
-        else:
-             
-             
-        # if frameNo%200 ==0:
-        #     write_video(stream, " _"+ str(priorPinCount)+"_" + str(pinCount))
-        # if priorPinCount <= pinCount:
-        #     priorPinCount = pinCount
-        #     return
-        
-        # else:
-            if pinsFalling == True:
+        if pinsFalling == True:
                 if timesup == False:
                     return
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount)
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )
-                    # print('Changed Old: ', priorPinCount, 'New ',  pinCount, 'Result ', result, 'Timers ', threading.active_count)
                     # write_video(stream, result)
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
-                return
-        pinsFalling = True
-        t = threading.Timer(1.0, timeout)
-        t.start() # after 1.0 seconds, stream will be saved
-        print ('timer is running', priorPinCount, pinCount)
-        return
+        if priorPinCount <= pinCount: 
+            priorPinCount = pinCount
+            return
+        else:
+            pinsFalling = True
+            t = threading.Timer(2.0, timeout)
+            t.start() # after 1.0 seconds, stream will be saved
+            print ('timer is running', priorPinCount, pinCount)
+            return
 
 def iotSend(buf, result):
     global frameNo
@@ -332,6 +321,7 @@ with picamera.PiCamera() as camera:
             print ('ArmPresent', frameNo, ballCounter)
             time.sleep(9)
             armPresent = False
+            ballCounter = 0
             continue
 
         frame2= getCroppedImage(frame2, ballCrops)
@@ -377,7 +367,7 @@ with picamera.PiCamera() as camera:
         # cv2.imshow('Thresh' , thresh)
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        # writeImageSeries(20, 3, img_rgb)
+        writeImageSeries(30, 3, img_rgb)
        
         # cv2.imshow('Frame' , img_rgb)
         # if frameNo%2 ==0:

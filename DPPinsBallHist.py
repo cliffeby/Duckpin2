@@ -50,15 +50,14 @@ def bit_GPIO(pins,pinCount):
 def get_hist():
     global pin_crop_ranges, hist, histDict
     global x,y,x1,y1
-    output = cv2.imread('../histImage/BArmMask.jpg',1)
-    print(type(output))
+    output = cv2.imread('../histImage/BallMask.jpg',1)
     histDict = {}
     crop = []
     for i in range(0,10):
         crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
         hist = cv2.calcHist([crop[i]],[1],None,[4], [0,255])
         histDict[i] = hist
-    # print (histDict)
+    print (histDict)
             
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
@@ -172,16 +171,17 @@ def findPins():
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
         output = img_rgb
-        cv2.imshow('Pins', output)
-        threshold = 0.3
+        # cv2.imshow('Pins', output)
+        threshold = 0.5
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 hist = cv2.calcHist([crop[i]],[1],None,[4], [0,255])
                 d= cv2.compareHist(histDict[i], hist,0)
-                # print (i, d)
+                if frameNo%500 == 0:
+                    print (i, d)
                 if threshold < d:
                     pinCount = pinCount + 2**(9-i)
-                    print (i, d)
+                
         bit_GPIO(pinsGPIO, pinCount)
         if pinsFalling == True:
                 if timesup == False:
@@ -359,7 +359,7 @@ with picamera.PiCamera() as camera:
         # cv2.imshow('Thresh' , thresh)
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        # writeImageSeries(20, 3, img_rgb)
+        writeImageSeries(20, 3, img_rgb)
        
         # cv2.imshow('Frame' , img_rgb)
         # if frameNo%2 ==0:

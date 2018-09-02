@@ -16,15 +16,16 @@ y=0
 frameNo = 0
 
 def setResolution():
-    resX = 1440
-    resY = 900
+    resX = 1024
+    resY = 768
     res = (int(resX), int(resY))
+    print(res)
     return res
 
 # crop_ranges are y,y1,x,x1 from top left
-mask_crop_ranges = cropdata1440.ballCrops
-crop_ranges = cropdata1440.pin_crop_ranges
-arm_crop_ranges = cropdata1440.resetArmCrops
+mask_crop_ranges = cropdata1024.ballCrops
+crop_ranges = cropdata1024.pin_crop_ranges
+arm_crop_ranges = cropdata1024.resetArmCrops
 def drawPinRectangles():
     global pin_image
     global crop_ranges
@@ -41,9 +42,9 @@ def drawPinRectangles():
             cv2.putText(pin_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(pin_image,str(b),b,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     if frameNo==11:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/BCombinedMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/BCombinedMaskm.jpg',pin_image)
     else:
-        cv2.imwrite('/home/pi/Shared/videos/AAA/BPinMask.jpg',pin_image)
+        cv2.imwrite('/home/pi/Shared/videos/AAA/BPinMaskm.jpg',pin_image)
 
 def drawBallRectangles():
     global ball_image
@@ -60,7 +61,7 @@ def drawBallRectangles():
     
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/AAA/BBallMask.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/BBallMaskm.jpg',ball_image)
 
 def drawArmRectangles():
     global arm_image
@@ -76,7 +77,7 @@ def drawArmRectangles():
     cv2.rectangle(ball_image, b, a, 255, 2)
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/AAA/BArmMask.jpg',arm_image)
+    cv2.imwrite('/home/pi/Shared/videos/AAA/BArmMaskm.jpg',arm_image)
 
 def detect_motion(camera):
     global frameNo
