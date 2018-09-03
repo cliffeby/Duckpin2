@@ -46,6 +46,16 @@ def bit_GPIO(pins,pinCount):
              GPIO.output(pins[idx], GPIO.HIGH)
         else:
             GPIO.output(pins[idx], GPIO.LOW)
+
+def getMaskFrame():
+    global mask_gray, resetArmCrops, ballCrops
+    mask_img = cv2.imread('../histImage/BallMask.jpg',1)
+    frame1 = mask_img.array     
+    img_gray1arm = getCroppedImage(frame1, resetArmCrops)
+    img_gray1arm = cv2.cvtColor(img_gray1arm, cv2.COLOR_BGR2GRAY)
+    maskFrame = getCroppedImage(frame1, ballCrops)
+    mask_gray = cv2.cvtColor(maskFrame, cv2.COLOR_BGR2GRAY)
+    
             
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
@@ -136,12 +146,12 @@ def isResetArm():
     if len(cnts) > 0:
 		# find the largest contour in the mask, then use
 		# it to compute the minimum enclosing circle and centroid
-        c = max(cnts, key=cv2.contourArea)
-        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        if radius > 15:
-            print('Reset Arm', radius, frameNo, len(cnts), ballCounter, " ", priorPinCount)
-            armPresent = True
-            ballCounter = 0
+        # c = max(cnts, key=cv2.contourArea)
+        # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+        # if radius > 15:
+        print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
+        armPresent = True
+        ballCounter = 0
     return
 
 def findPins():
@@ -188,7 +198,7 @@ def findPins():
         else:
             pinsFalling = True
             t = threading.Timer(2.0, timeout)
-            t.start() # after 1.0 seconds, stream will be saved
+            t.start() # after 2.0 seconds, stream will be saved
             print ('timer is running', priorPinCount, pinCount)
             return
 
@@ -242,68 +252,56 @@ def drawPinRectangles():
     cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
+getMaskFrame()
 setterPresent = False
 armPresent = False
-maskFrame = True
+ballPresent = False
 priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
 x=0
 x1=0 +x
-y=5
+y=0
 y1=0 + y
-# ballCoords=[0]*100
 frameNo = 0
 prevFrame = 0
 ballCounter = 0
-ballCounterFrame = 0
 videoReadyFrameNo = 0
-origCounter = 0
-pinReactionTime = 0
-pinReactionFlag = False
 video_preseconds = 3
-motion_width = 1440
-motion_height = 900
-# for i in range(0,1):
-#     a =(int(crop_ranges[i][2])+x,int(crop_ranges[i][0])+y)
-#     b = (int(crop_ranges[i][3])+x1, int(crop_ranges[i][1])+y1)
+
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
-    # camera.framerate = 25
     camera.video_stabilization = True
     camera.annotate_background = True
     camera.rotation = 180
     rawCapture = PiRGBArray(camera, size=camera.resolution)
-        # setup a circular buffer
+    # setup a circular buffer
     # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
     stream = picamera.PiCameraCircularIO(camera, size = 2000000)
     # video recording into circular buffer from splitter port 1
     camera.start_recording(stream, format='h264', splitter_port=1)
-        #camera.start_recording('test.h264', splitter_port=1)
-        # low resolution motion vector analysis from splitter port 2
-    # camera.start_recording('/dev/null', splitter_port=2, resize=(motion_width,motion_height) ,format='h264')
-        # wait some seconds for stable video data
+    #camera.start_recording('test.h264', splitter_port=1)
+    # wait 2 seconds for stable video data
     camera.wait_recording(2, splitter_port=1)
     # motion_detected = False
-
     print(camera.resolution)
-    # time.sleep(1)
+
     for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=True):
         # grab the raw NumPy array representing the image, then initialize the timestamp
-        # and occupied/unoccupied text
+        # and occupied/unoccupied text???????????????????
         rawCapture.truncate()
         rawCapture.seek(0)
         
         frame2 = frame.array
-        if maskFrame:
-            frame1 = frame.array     
-            img_gray1arm = getCroppedImage(frame1, resetArmCrops)
-            img_gray1arm = cv2.cvtColor(img_gray1arm, cv2.COLOR_BGR2GRAY)
-            mask = getCroppedImage(frame1, ballCrops)
-            frame1 = mask
-            maskFrame = False
-            continue
+        # if maskFrame:
+        #     frame1 = frame.array     
+        #     img_gray1arm = getCroppedImage(frame1, resetArmCrops)
+        #     img_gray1arm = cv2.cvtColor(img_gray1arm, cv2.COLOR_BGR2GRAY)
+        #     mask = getCroppedImage(frame1, ballCrops)
+        #     frame1 = mask
+        #     maskFrame = False
+        #     continue
         frameNo = frameNo +1
         img_rgb = frame2
         frame2arm = getCroppedImage(frame2, resetArmCrops)
@@ -325,9 +323,9 @@ with picamera.PiCamera() as camera:
             continue
 
         frame2= getCroppedImage(frame2, ballCrops)
-        img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-        diff = cv2.absdiff(img_gray1,img_gray2)
+        # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+        diff = cv2.absdiff(mask_gray,img_gray)
         # First value reduces noise.  Values above 150 seem to miss certain ball colors
         ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
         frame = thresh
@@ -338,49 +336,19 @@ with picamera.PiCamera() as camera:
             cv2.CHAIN_APPROX_SIMPLE)[-2]
         # center = None
         # radius = 0
-        if len(cnts) > 0:
-                # find the largest contour in the mask, then use
-            # it to compute the minimum enclosing circle and centroid
-            # c = max(cnts, key=cv2.contourArea)
-            # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-            print('Ball Area', frameNo, len(cnts))
-            if prevFrame + 5 < frameNo:
-                    ballCounter = ballCounter + 1
-                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter)
-                    prevFrame = frameNo
-            # only proceed if the radius meets a minimum size
-            # if radius > 5:
-            #     # draw the circle and centroid on the frame,
-            #     # then update the list of tracked points
-            #     M = cv2.moments(c)
-            #     center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-            #     cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
-            #     if prevFrame + 15 < frameNo:
-            #         ballCounter = ballCounter + 1
-            #         prevFrame = frameNo
-            #     print('BALL CENTER',center, radius, frameNo, len(cnts), ballCounter)
-                
-                        # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
-        img_gray1=img_gray2        
-        # cv2.imshow('Ball', img_gray2)
-        # cv2.imshow('Arm', threshArm)
-        # cv2.imshow('Thresh' , thresh)
+        if len(cnts) == 0:
+            if ballPresent == True:
+                ballPresent = False
+                ballCounter = ballCounter + 1
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo)
+        else:
+            ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         writeImageSeries(30, 3, img_rgb)
-       
-        # cv2.imshow('Frame' , img_rgb)
-        # if frameNo%2 ==0:
-        findPins()  
-        # print("FrameNo ", frameNo, "PinCount", priorPinCount )     
-
-        # cv2.rectangle(img_rgb,b, a, 255,2)
-
-        # cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
-        # writeImageSeries(135,20)
+        findPins()
         
         key = cv2.waitKey(1) & 0xFF
-        
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
             break
