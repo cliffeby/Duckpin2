@@ -48,14 +48,13 @@ def bit_GPIO(pins,pinCount):
             GPIO.output(pins[idx], GPIO.LOW)
 
 def getMaskFrame():
-    global mask_gray, resetArmCrops, ballCrops
-    mask_img = cv2.imread('../histImage/BallMask.jpg',1)
-    frame1 = mask_img.array     
-    img_gray1arm = getCroppedImage(frame1, resetArmCrops)
-    img_gray1arm = cv2.cvtColor(img_gray1arm, cv2.COLOR_BGR2GRAY)
+    global mask_gray, resetArmCrops, ballCrops, img_gray1arm
+    frame1 = cv2.imread('../histImage/BallMask.jpg',1)
+    img_arm = getCroppedImage(frame1, resetArmCrops)
+    (h,w,d) = img_arm.shape
+    img_gray1arm = cv2.cvtColor(img_arm, cv2.COLOR_BGR2GRAY)
     maskFrame = getCroppedImage(frame1, ballCrops)
     mask_gray = cv2.cvtColor(maskFrame, cv2.COLOR_BGR2GRAY)
-    
             
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
@@ -133,6 +132,7 @@ def isResetArm():
     frame2arm = getCroppedImage(img_rgb, resetArmCrops)
     img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
     # print('IMG GRAY ARM', img_gray1arm, img_gray2arm, frame2arm, type(frame2arm))
+    # print(type(img_gray1arm), type(img_gray2arm))
     diff = cv2.absdiff(img_gray1arm,img_gray2arm)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
     ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
