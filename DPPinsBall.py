@@ -136,13 +136,12 @@ def isResetArm():
     diff = cv2.absdiff(img_gray1arm,img_gray2arm)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
     ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
-    frame = threshArm
+    # frame = threshArm
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
     threshArm = cv2.medianBlur(threshArm,15)
     cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
-    center = None
-    radius = 0
+
     if len(cnts) > 0:
 		# find the largest contour in the mask, then use
 		# it to compute the minimum enclosing circle and centroid
@@ -188,7 +187,8 @@ def findPins():
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount)
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )
-                    # write_video(stream, result)
+                    # if priorPinCount == 1023:
+                    #     write_video(stream, result)
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
@@ -217,7 +217,6 @@ def iotSend(buf, result):
         
         print("CONTENT LEN", len(content), type(content))
         client.upload_blob_async(filename,content, len(content), iot.blob_upload_conf_callback,1001)
-
 
     except iot.IoTHubError as iothub_error:
         print ( "Unexpected error %s from IoTHub" % iothub_error )
@@ -265,7 +264,6 @@ x1=0 +x
 y=0
 y1=0 + y
 frameNo = 0
-prevFrame = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
@@ -348,7 +346,7 @@ with picamera.PiCamera() as camera:
         writeImageSeries(30, 3, img_rgb)
         findPins()
         
-        key = cv2.waitKey(1) & 0xFF
-        # if the `q` key was pressed, break from the loop
-        if key == ord("q"):
-            break
+        # key = cv2.waitKey(1000) & 0xFF
+        # # if the `q` key was pressed, break from the loop
+        # if key == ord("q"):
+        #     break
