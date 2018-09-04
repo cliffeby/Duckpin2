@@ -198,6 +198,7 @@ def findPins():
         else:
             pinsFalling = True
             t = threading.Timer(2.0, timeout)
+            timesup = False
             t.start() # after 2.0 seconds, stream will be saved
             print ('timer is running', priorPinCount, pinCount)
             return
@@ -249,6 +250,12 @@ def drawPinRectangles():
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
+    a = (resetArmCrops[2]+mx, resetArmCrops[0]+my)
+    b = (resetArmCrops[3]+mx, resetArmCrops[1]+my)
+    cv2.rectangle(ball_image, b, a, 255, 2)
+    cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
 getMaskFrame()
@@ -292,14 +299,6 @@ with picamera.PiCamera() as camera:
         rawCapture.seek(0)
         
         frame2 = frame.array
-        # if maskFrame:
-        #     frame1 = frame.array     
-        #     img_gray1arm = getCroppedImage(frame1, resetArmCrops)
-        #     img_gray1arm = cv2.cvtColor(img_gray1arm, cv2.COLOR_BGR2GRAY)
-        #     mask = getCroppedImage(frame1, ballCrops)
-        #     frame1 = mask
-        #     maskFrame = False
-        #     continue
         frameNo = frameNo +1
         img_rgb = frame2
         frame2arm = getCroppedImage(frame2, resetArmCrops)
@@ -310,6 +309,7 @@ with picamera.PiCamera() as camera:
             print('SetterPresent', frameNo, ballCounter)
             time.sleep(9)
             setterPresent = False
+            ballPresent = False
             continue
         
         isResetArm()    #Reset
@@ -317,6 +317,7 @@ with picamera.PiCamera() as camera:
             print ('ArmPresent', frameNo, ballCounter)
             time.sleep(9)
             armPresent = False
+            ballPresent = False
             ballCounter = 0
             continue
 
@@ -338,12 +339,12 @@ with picamera.PiCamera() as camera:
             if ballPresent == True:
                 ballPresent = False
                 ballCounter = ballCounter + 1
-                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo)
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
         else:
             ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        writeImageSeries(30, 3, img_rgb)
+        # writeImageSeries(30, 3, img_rgb)
         findPins()
         
         # key = cv2.waitKey(1000) & 0xFF
