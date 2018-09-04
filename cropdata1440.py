@@ -3,7 +3,7 @@
 # Crops for 1440 x 900
 # crop_ranges are y,y1,x,x1 from top left
 
-resetArmCrops = [86,360,1185,1292]
+resetArmCrops = [86,360,1185,1350]
 
 pinSetterCrops = [40,100,560,900]
 
