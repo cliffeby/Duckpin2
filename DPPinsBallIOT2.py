@@ -68,7 +68,7 @@ def write_video(stream,result):
 # lock the stream here as we're definitely not writing to it
 # simultaneously
     global frameNo, videoReadyFrameNo
-    if frameNo < videoReadyFrameNo + 120:
+    if frameNo < videoReadyFrameNo + 10:
         return
     videoReadyFrameNo = frameNo
     print("writng dp ", result)
@@ -283,7 +283,7 @@ with picamera.PiCamera() as camera:
     rawCapture = PiRGBArray(camera, size=camera.resolution)
     # setup a circular buffer
     # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
-    stream = picamera.PiCameraCircularIO(camera, size = 2000000)
+    stream = picamera.PiCameraCircularIO(camera, size = 4000000)
     # video recording into circular buffer from splitter port 1
     camera.start_recording(stream, format='h264', splitter_port=1)
     #camera.start_recording('test.h264', splitter_port=1)
