@@ -3,12 +3,21 @@
 import time
 import cv2
 import numpy
+import glob
 import cropdata1440
 # import RPi.GPIO as GPIO
 # from matplotlib import pyplot as plt
 
+print(glob.glob('C:/Users/cliff/Downloads/dp*.h264'))
+a = []
+b = {}
 
-mask_crop_ranges = cropdata1440.ballCrops
+a = glob.glob('C:/Users/cliff/Downloads/dp*.h264')
+b[1,0] = a[3]
+s= b[1,0]
+beg = s.find('_') +1
+print('AAAAAAAAAAAAAAAAAAAAAA', a[0],s[beg:beg+8])
+ball_crops = cropdata1440.ballCrops
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 
 def getCroppedImage(image,crop_array):
@@ -18,8 +27,8 @@ def getCroppedImage(image,crop_array):
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
         if frameNo <= frameNoStart+numberOfFrames:
-            print ('Saving ../videos/video3dFrame'+ str(frameNo) +'.jpg')
-            cv2.imwrite('../videos/video3dFrame'+ str(frameNo) +'.jpg',img_rgb)
+            print ('Saving ../videos/videoFrame'+ str(frameNo) +'.jpg')
+            cv2.imwrite('../videos/videoframe'+ str(frameNo) +'.jpg',img_rgb)
 
 def isPinSetter():
     global setterPresent
@@ -86,7 +95,7 @@ def findPins():
             priorPinCount = pinCount
             return True
     
-cap = cv2.VideoCapture('P:videos/dp _1023_0_Tue Sep  4 16_00_02 2018.h264')
+cap = cv2.VideoCapture(a[0])
 # setupGPIO(pinsGPIO)
 setterPresent = False
 armPresent = False
@@ -95,13 +104,13 @@ x=0
 x1=0 +x
 y=-0
 y1=0 + y
-
+fileCounter = 1
 frameNo = 0
 prevFrame = 0
 ballCounter = [0]*3
 origCounter = 0
 ret, frame1 = cap.read()
-frame1= frame1[650:900, 250:1300]
+frame1= getCroppedImage(frame1,ball_crops)
 img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 # getCroppedImage(frame1, mask_crop_ranges)
 
@@ -110,11 +119,12 @@ while(cap.isOpened()):
     try:
         type(frame2[0]) is None
     except:
-        print ("End of Video")
-        break
-        # cap.release()
-        # cap = cv2.VideoCapture('../videos/video3e.h264')
-        # ret, frame2 = cap.read()
+        print ("End of Video ", fileCounter)
+        
+        cap.release()
+        cap = cv2.VideoCapture(a[fileCounter])
+        ret, frame2 = cap.read()
+        fileCounter = fileCounter+1
     frameNo = frameNo +1
     img_rgb = frame2
 
@@ -128,7 +138,7 @@ while(cap.isOpened()):
                 armPresent = False
 
     # isPinSetter()
-    frame2= frame2[650:900, 250:1300]
+    frame2= getCroppedImage(frame2,ball_crops)
     
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1,img_gray2)
@@ -155,12 +165,12 @@ while(cap.isOpened()):
             M = cv2.moments(c)
             center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
             cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
-            if center < (1100,200):
-                    print('CENTER',center, radius, frameNo, len(cnts))
-                    # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
-            else:
-                firstArmFrame = frameNo
-                armPresent = True
+            # if center < (1100,200):
+            print('CENTER',center, radius, frameNo, len(cnts))
+            # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
+            # else:
+                # firstArmFrame = frameNo
+                # armPresent = True
     cv2.imshow('Ball', img_gray2)
     cv2.imshow('All' , img_rgb)
     tf = findPins()
@@ -168,7 +178,7 @@ while(cap.isOpened()):
     # cv2.rectangle(img_rgb,b, a, 255,2)
 
     # cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
-    # writeImageSeries(135,20)
+    # writeImageSeries(50,10, img_gray2)
     
     key = cv2.waitKey(1) & 0xFF
     
