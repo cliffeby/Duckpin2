@@ -1,0 +1,16 @@
+● sample.service - My Service to start Duckpins
+   Loaded: loaded (/lib/systemd/system/sample.service; enabled)
+   Active: failed (Result: exit-code) since Mon 2018-09-10 13:25:54 EDT; 4min 49s ago
+  Process: 1127 ExecStart=/usr/bin/python3 /home/pi/Shared/Duckpin2/DPPinsBall.py (code=exited, status=1/FAILURE)
+ Main PID: 1127 (code=exited, status=1/FAILURE)
+
+Sep 10 13:25:54 raspberrypi python3[1127]: Traceback (most recent call last):
+Sep 10 13:25:54 raspberrypi python3[1127]: File "/home/pi/Shared/Duckpin2/DPPinsBall.py", line 261, in <module>
+Sep 10 13:25:54 raspberrypi python3[1127]: getMaskFrame()
+Sep 10 13:25:54 raspberrypi python3[1127]: File "/home/pi/Shared/Duckpin2/DPPinsBall.py", line 53, in getMaskFrame
+Sep 10 13:25:54 raspberrypi python3[1127]: img_arm = getCroppedImage(frame1, resetArmCrops)
+Sep 10 13:25:54 raspberrypi python3[1127]: File "/home/pi/Shared/Duckpin2/DPPinsBall.py", line 30, in getCroppedImage
+Sep 10 13:25:54 raspberrypi python3[1127]: croppedImage = image[crop_array[0]:crop_array[1],crop_array[2]:crop_array[3]]
+Sep 10 13:25:54 raspberrypi python3[1127]: TypeError: 'NoneType' object is not subscriptable
+Sep 10 13:25:54 raspberrypi systemd[1]: sample.service: main process exited, code=exited, status=1/FAILURE
+Sep 10 13:25:54 raspberrypi systemd[1]: Unit sample.service entered failed state.
