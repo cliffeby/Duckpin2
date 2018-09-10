@@ -1,0 +1,10 @@
+#Startup
+[Unit]
+Description=My Service to start Duckpins
+After=multi-user.target
+[Service]
+Type=idle
+User=pi
+ExecStart=/usr/bin/python3 /home/pi/Shared/Duckpin2/testStartUp.py
+[Install]
+WantedBy=multi-user.target
