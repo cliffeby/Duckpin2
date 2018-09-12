@@ -49,7 +49,7 @@ def bit_GPIO(pins,pinCount):
 
 def getMaskFrame():
     global mask_gray, resetArmCrops, ballCrops, img_gray1arm
-    frame1 = cv2.imread('../histImage/BallMask.jpg',1)
+    frame1 = cv2.imread('/home/pi/Shared/histImage/BallMask.jpg',1)
     img_arm = getCroppedImage(frame1, resetArmCrops)
     (h,w,d) = img_arm.shape
     img_gray1arm = cv2.cvtColor(img_arm, cv2.COLOR_BGR2GRAY)
@@ -344,7 +344,7 @@ with picamera.PiCamera() as camera:
             ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        # writeImageSeries(30, 3, img_rgb)
+        writeImageSeries(30, 3, img_rgb)
         findPins()
         
         # key = cv2.waitKey(1000) & 0xFF
