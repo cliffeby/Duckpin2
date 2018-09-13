@@ -210,9 +210,9 @@ def iotSend(buf, result):
         # if client.protocol == IoTHubTransportProvider.MQTT:
         print ( "IoTHubClient is reporting state" )
         reported_state = "{\"newState\":\"standBy\"}"
-        td = datetime.now()
+        # td = datetime.now()
         client.send_reported_state(reported_state, len(reported_state), iot.send_reported_state_callback, iot.SEND_REPORTED_STATE_CONTEXT)
-        filename = "dp" + result +"_" + td.ctime() + ".h264"
+        filename = "dp" + result + ".h264"
         f = open(buf, "rb+")
         content = f.read()
         
@@ -283,7 +283,7 @@ with picamera.PiCamera() as camera:
     rawCapture = PiRGBArray(camera, size=camera.resolution)
     # setup a circular buffer
     # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
-    stream = picamera.PiCameraCircularIO(camera, size = 2000000)
+    stream = picamera.PiCameraCircularIO(camera, size = 3000000)
     # video recording into circular buffer from splitter port 1
     camera.start_recording(stream, format='h264', splitter_port=1)
     #camera.start_recording('test.h264', splitter_port=1)
