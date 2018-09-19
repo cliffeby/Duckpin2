@@ -185,7 +185,7 @@ def findPins():
                 if timesup == False:
                     return
                 else:
-                    result = " _"+ str(priorPinCount)+"_" + str(pinCount)
+                    result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_"
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )
                     if priorPinCount == 1023:
                         write_video(stream, result)
