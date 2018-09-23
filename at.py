@@ -272,7 +272,10 @@ y=0
 y1=0 + y
 frameNo = 0
 ballCounter = 0
+<<<<<<< HEAD
 ballFrameNo = 1
+=======
+>>>>>>> 706d81bc2b7a3f62e54bb9a9285ba77033c6d757
 videoReadyFrameNo = 0
 video_preseconds = 3
 
@@ -335,6 +338,7 @@ with picamera.PiCamera() as camera:
         # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)[-2]
+<<<<<<< HEAD
         # center = None        
         radius = 0
         if len(cnts) > 0:
@@ -353,6 +357,25 @@ with picamera.PiCamera() as camera:
         if ballFrameNo +10 < frameNo:
             ballPresent = False
             ballFrameNo = frameNo
+=======
+        # center = None
+        # radius = 0
+        # print('contours', cnts)
+        if len(cnts) <=2:
+            if ballPresent == True:
+                ballPresent = False
+                ballCounter = ballCounter + 1
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
+        elif len(cnts)>3:
+            #          find the largest contour in the mask, then use
+            # it to compute the minimum enclosing circle and centroid
+            c = max(cnts, key=cv2.contourArea)
+            ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+            if radius > 5:
+                ballPresent = True
+                print('Ball Present',cnts)
+
+>>>>>>> 706d81bc2b7a3f62e54bb9a9285ba77033c6d757
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(30, 3, img_rgb)

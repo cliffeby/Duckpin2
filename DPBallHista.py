@@ -59,13 +59,14 @@ def get_hist():
         histDict[i] = hist
     print (histDict)
 
-def get_ballhist(output):
+def get_ballhist(frame):
     global ballCrops, histb, frameNo
     global x,y,x1,y1
     # output = cv2.imread('../histImage/BallMask.jpg',1)
-    histBallDict = {}
-    crop = getCroppedImage(output, ballCrops)
-    cv2.cvtColor(crop, crop, 'CV_BGR2HSV')
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    crop = getCroppedImage(frame, ballCrops)
+    print("Crop and Output Types", type(crop), type(frame))
+    
     histb = cv2.calcHist([crop],[1],None,[40], [0,255])
     print (frameNo, histb)
             
@@ -334,7 +335,7 @@ with picamera.PiCamera() as camera:
             continue
 
         frame2= getCroppedImage(frame2, ballCrops)
-        cv2.cvtColor(frame2, frame2, "CV_BGR2HSV")
+        frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2HSV)
         histnow = cv2.calcHist([frame2],[1],None,[40], [0,255])
         
         d= cv2.compareHist(histnow, histb,0)
