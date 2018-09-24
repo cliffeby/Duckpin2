@@ -162,7 +162,7 @@ def findPins():
         def timeout():
             global timesup
             timesup = True
-            print ('Timer is finished', timesup)
+            # print ('Timer is finished', timesup)
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
@@ -200,7 +200,7 @@ def findPins():
             t = threading.Timer(2.0, timeout)
             timesup = False
             t.start() # after 2.0 seconds, stream will be saved
-            print ('timer is running', priorPinCount, pinCount)
+            # print ('timer is running', priorPinCount, pinCount)
             return
 
 def iotSend(buf, result):
@@ -308,25 +308,23 @@ with picamera.PiCamera() as camera:
         isPinSetter()   #Deadwood
         if setterPresent:
             print('SetterPresent', frameNo, ballCounter)
-            time.sleep(9)
+            time.sleep(5)
             setterPresent = False
             ballPresent = False
-            continue
         
         isResetArm()    #Reset
         if armPresent:
             print ('ArmPresent', frameNo, ballCounter)
-            time.sleep(9)
+            time.sleep(5)
             armPresent = False
             ballPresent = False
             ballCounter = 0
-            continue
 
         frame2= getCroppedImage(frame2, ballCrops)
         # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(mask_gray,img_gray)
-        print ('DIFF', diff.sum())
+        
         # First value reduces noise.  Values above 150 seem to miss certain ball colors
         ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
         frame = thresh
@@ -345,18 +343,18 @@ with picamera.PiCamera() as camera:
             # print('radius', radius, frameNo, len(cnts))
 
             # only proceed if the radius meets a minimum size
-            if radius > 20:
+            if radius > 10:
                 if ballPresent == False:
-                    ballCounter =+1
+                    ballCounter = ballCounter +1
                     ballPresent = True
-                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
-        if ballFrameNo +10 < frameNo:
+                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo, ballFrameNo)
+        if ballFrameNo +30 < frameNo:
             ballPresent = False
             ballFrameNo = frameNo
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(30, 3, img_rgb)
-        if frameNo%3 == 0:
+        if frameNo%2 == 0:
             findPins()
             # print('Frame', frameNo)
         # cv2.imshow('frame', diff)
