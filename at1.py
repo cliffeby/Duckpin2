@@ -208,7 +208,7 @@ def iotSend(buf, result):
     try:
         client = iot.iothub_client_init()
         # if client.protocol == IoTHubTransportProvider.MQTT:
-        print ( "IoTHubClient is reporting state" )
+        # print ( "IoTHubClient is reporting state" )
         reported_state = "{\"newState\":\"standBy\"}"
         # td = datetime.now()
         client.send_reported_state(reported_state, len(reported_state), iot.send_reported_state_callback, iot.SEND_REPORTED_STATE_CONTEXT)
@@ -216,16 +216,16 @@ def iotSend(buf, result):
         f = open(buf, "rb+")
         content = f.read()
         
-        print("CONTENT LEN", len(content), type(content))
+        print("IOT CONTENT LEN", len(content), type(content))
         client.upload_blob_async(filename,content, len(content), iot.blob_upload_conf_callback,1001)
 
     except iot.IoTHubError as iothub_error:
         print ( "Unexpected error %s from IoTHub" % iothub_error )
         return
-    except KeyboardInterrupt:
-        print ( "IoTHubClient sample stopped" )
+    # except KeyboardInterrupt:
+        # print ( "IoTHubClient sample stopped" )
 
-    iot.print_last_message_time(client)
+    # iot.print_last_message_time(client)
 
 def drawPinRectangles():
     global ball_image,img_rgb,x,y
@@ -305,20 +305,7 @@ with picamera.PiCamera() as camera:
         frame2arm = getCroppedImage(frame2, resetArmCrops)
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
-        isPinSetter()   #Deadwood
-        if setterPresent:
-            print('SetterPresent', frameNo, ballCounter)
-            time.sleep(5)
-            setterPresent = False
-            ballPresent = False
-        
-        isResetArm()    #Reset
-        if armPresent:
-            print ('ArmPresent', frameNo, ballCounter)
-            time.sleep(5)
-            armPresent = False
-            ballPresent = False
-            ballCounter = 0
+
 
         frame2= getCroppedImage(frame2, ballCrops)
         # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -351,7 +338,23 @@ with picamera.PiCamera() as camera:
         if ballFrameNo +30 < frameNo:
             ballPresent = False
             ballFrameNo = frameNo
-       
+               
+        isPinSetter()   #Deadwood
+        if setterPresent:
+            print('SetterPresent', frameNo, ballCounter,str(datetime.now()))
+            time.sleep(10)
+            print('Setter awake ',str(datetime.now()))
+            setterPresent = False
+            ballPresent = False
+        
+        isResetArm()    #Reset
+        if armPresent:
+            print ('ArmPresent', frameNo, ballCounter,str(datetime.now()))
+            time.sleep(10)
+            print("Arm awake ", str(datetime.now()))
+            armPresent = False
+            ballPresent = False
+            ballCounter = 0
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(30, 3, img_rgb)
         if frameNo%2 == 0:
