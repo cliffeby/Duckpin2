@@ -7,23 +7,47 @@ import numpy
 import RPi.GPIO as GPIO
 import Iothub_client_functions as iot
 import picamera
-import io
+import io, sys
 import threading
 import cropdata1440
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
+from imutils.video import VideoStream
+import imutils
 
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 pinSetterCrops = cropdata1440.pinSetterCrops
-ballCrops = cropdata1440.ballCrops
+if len(sys.argv) > 1:
+        mode = sys.argv[1]
+        if mode == 'H':
+            ballCrops = [460,885,10,1330] #1440, 912
+        if mode == 'M':
+            ballCrops = [360,720,10,1275] # 1280,720
+        if mode == 'L':
+                ballCrops = [240,478,10,638] # 640, 480
+
+
+
+# ballCrops = [460,885,10,1330] #1440, 912
+# ballCrops = [360,720,10,1275] # 1280,720
+ballCrops = [240,478,10,638] # 640, 480
 
 def setResolution():
-    resX = 1440  #640
-    resY = 900  #480
+    global resX, mode
+    resX = 640 #1280 #1440  #640
+    resY = 480 #720 #900  #480
     res = (int(resX), int(resY))
+    if mode == 'H':
+             res = (int(1440), int(912))
+    if mode == 'M':
+             res = (int(1280), int(720))
+    if mode == 'L':
+             res = (int(640), int(320))
+    print('Resolution', res, mode)
+    resX = res[0]
     return res
 
 def getCroppedImage(image,crop_array):
@@ -59,8 +83,8 @@ def getMaskFrame():
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
         if frameNo <= frameNoStart+numberOfFrames:
-            print ('Saving ../home/pi/Shared/videos/videoCCEFrame'+ str(frameNo) +'.jpg')
-            cv2.imwrite('/home/pi/Shared/videos/videoCCEFrame'+ str(frameNo) +'.jpg',img_rgb)
+            print ('Saving ../home/pi/Shared/videos/videoCCEFrame'+ str(resX)+ str(frameNo) +'.jpg')
+            cv2.imwrite('/home/pi/Shared/videos/videoCCEFrame'+ str(resX) + str(frameNo) +'.jpg',img_rgb)
             drawPinRectangles()
 
 def write_video(stream,result):
@@ -162,7 +186,7 @@ def findPins():
         def timeout():
             global timesup
             timesup = True
-            # print ('Timer is finished', timesup)
+            print ('Timer is finished', timesup)
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
@@ -200,7 +224,7 @@ def findPins():
             t = threading.Timer(2.0, timeout)
             timesup = False
             t.start() # after 2.0 seconds, stream will be saved
-            # print ('timer is running', priorPinCount, pinCount)
+            print ('timer is running', priorPinCount, pinCount)
             return
 
 def iotSend(buf, result):
@@ -229,7 +253,7 @@ def iotSend(buf, result):
 
 def drawPinRectangles():
     global ball_image,img_rgb,x,y
-    global pin_crop_ranges
+    global pin_crop_ranges,resX
     mx=x
     my=y
     ball_image = img_rgb
@@ -249,16 +273,16 @@ def drawPinRectangles():
     cv2.rectangle(ball_image, b, a, 255, 2)
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(resX)+str(i) +'.jpg',ball_image)
     a = (resetArmCrops[2]+mx, resetArmCrops[0]+my)
     b = (resetArmCrops[3]+mx, resetArmCrops[1]+my)
     cv2.rectangle(ball_image, b, a, 255, 2)
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(resX)+str(i+1) +'.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
-getMaskFrame()
+# getMaskFrame()
 setterPresent = False
 armPresent = False
 ballPresent = False
@@ -272,59 +296,66 @@ y=0
 y1=0 + y
 frameNo = 0
 ballCounter = 0
-ballFrameNo = 1
 videoReadyFrameNo = 0
 video_preseconds = 3
-
-with picamera.PiCamera() as camera:
-    camera.resolution = setResolution()
-    camera.video_stabilization = True
-    camera.annotate_background = True
-    camera.rotation = 180
-    rawCapture = PiRGBArray(camera, size=camera.resolution)
-    # setup a circular buffer
-    # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
-    stream = picamera.PiCameraCircularIO(camera, size = 3000000)
-    # video recording into circular buffer from splitter port 1
-    camera.start_recording(stream, format='h264', splitter_port=1)
-    #camera.start_recording('test.h264', splitter_port=1)
-    # wait 2 seconds for stable video data
-    camera.wait_recording(2, splitter_port=1)
-    # motion_detected = False
-    print(camera.resolution)
-
-    for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=True):
-        # grab the raw NumPy array representing the image, then initialize the timestamp
+while True:
+# with picamera.PiCamera() as camera:
+#     camera.resolution = setResolution()
+#     camera.video_stabilization = True
+#     camera.annotate_background = True
+#     camera.rotation = 180
+#     rawCapture = PiRGBArray(camera, size=camera.resolution)
+#     # setup a circular buffer
+#     # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
+#     stream = picamera.PiCameraCircularIO(camera, size = 3000000)
+#     # video recording into circular buffer from splitter port 1
+#     camera.start_recording(stream, format='h264', splitter_port=1)
+#     #camera.start_recording('test.h264', splitter_port=1)
+#     # wait 2 seconds for stable video data
+#     camera.wait_recording(2, splitter_port=1)
+#     # motion_detected = False
+#     print(camera.resolution)
+    vs = VideoStream(src=0, usePiCamera=True, resolution=setResolution()).start()
+# Allow the camera to warm up.
+    time.sleep(2.0)
+    frame1 = vs.read() 
+    frame1= getCroppedImage(frame1, ballCrops)
+        # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    mask_gray = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+    # for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=True):
+    #     # grab the raw NumPy array representing the image, then initialize the timestamp
         # and occupied/unoccupied text???????????????????
-        rawCapture.truncate()
-        rawCapture.seek(0)
+        # rawCapture.truncate()
+        # rawCapture.seek(0)
+    while True:
+        frame = vs.read()        
+        frame2 = frame      
+        frameNo = frameNo +1        
+        img_rgb = frame2        
+        # frame2arm = getCroppedImage(frame2, resetArmCrops)
+        # img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+        print('Frame No ', frameNo)
+        # isPinSetter()   #Deadwood
+        # if setterPresent:
+        #     print('SetterPresent', frameNo, ballCounter)
+        #     time.sleep(9)
+        #     setterPresent = False
+        #     ballPresent = False
+        #     continue
         
-        frame2 = frame.array
-        frameNo = frameNo +1
-        img_rgb = frame2
-        frame2arm = getCroppedImage(frame2, resetArmCrops)
-        img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
-
-        isPinSetter()   #Deadwood
-        if setterPresent:
-            print('SetterPresent', frameNo, ballCounter)
-            time.sleep(5)
-            setterPresent = False
-            ballPresent = False
-        
-        isResetArm()    #Reset
-        if armPresent:
-            print ('ArmPresent', frameNo, ballCounter)
-            time.sleep(5)
-            armPresent = False
-            ballPresent = False
-            ballCounter = 0
+        # # isResetArm()    #Reset
+        # if armPresent:
+        #     print ('ArmPresent', frameNo, ballCounter)
+        #     time.sleep(9)
+        #     armPresent = False
+        #     ballPresent = False
+        #     ballCounter = 0
+        #     continue
 
         frame2= getCroppedImage(frame2, ballCrops)
         # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         diff = cv2.absdiff(mask_gray,img_gray)
-        
         # First value reduces noise.  Values above 150 seem to miss certain ball colors
         ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
         frame = thresh
@@ -333,32 +364,21 @@ with picamera.PiCamera() as camera:
         # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)[-2]
-        # center = None        
-        radius = 0
-        if len(cnts) > 0:
-            # find the largest contour in the mask, then use
-            # it to compute the minimum enclosing circle and centroid
-            c = max(cnts, key=cv2.contourArea)
-            ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-            # print('radius', radius, frameNo, len(cnts))
-
-            # only proceed if the radius meets a minimum size
-            if radius > 10:
-                if ballPresent == False:
-                    ballCounter = ballCounter +1
-                    ballPresent = True
-                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo, ballFrameNo)
-        if ballFrameNo +30 < frameNo:
-            ballPresent = False
-            ballFrameNo = frameNo
+        # center = None
+        # radius = 0
+        if len(cnts) == 0:
+            if ballPresent == True:
+                ballPresent = False
+                ballCounter = ballCounter + 1
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
+        else:
+            ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        # writeImageSeries(30, 3, img_rgb)
-        if frameNo%2 == 0:
-            findPins()
-            # print('Frame', frameNo)
-        # cv2.imshow('frame', diff)
-        # key = cv2.waitKey(1000) & 0xFF
+        writeImageSeries(30, 3, img_rgb)
+        # findPins()
+        
+        # key = cv2.waitKey() & 0xFF
         # # if the `q` key was pressed, break from the loop
         # if key == ord("q"):
         #     break
