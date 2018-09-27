@@ -307,8 +307,8 @@ with picamera.PiCamera() as camera:
         isPinSetter()   #Deadwood
         if setterPresent:
             print('SetterPresent', frameNo, ballCounter)
-            bit_GPIO(pins,priorPinCount)
-            time.sleep(7)
+            bit_GPIO(pinsGPIO,priorPinCount)
+            time.sleep(10)
             setterPresent = False
             ballPresent = False
             continue
@@ -316,8 +316,8 @@ with picamera.PiCamera() as camera:
         isResetArm()    #Reset
         if armPresent:
             print ('ArmPresent', frameNo, ballCounter)
-            bit_GPIO(pins,1023)
-            time.sleep(7)
+            bit_GPIO(pinsGPIO,1023)
+            time.sleep(10)
             armPresent = False
             ballPresent = False
             ballCounter = 0
@@ -346,8 +346,9 @@ with picamera.PiCamera() as camera:
             ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        writeImageSeries(30, 3, img_rgb)
-        findPins()
+        # writeImageSeries(30, 3, img_rgb)
+        if frameno%2 == 0:
+            findPins()
         
         # key = cv2.waitKey(1000) & 0xFF
         # # if the `q` key was pressed, break from the loop
