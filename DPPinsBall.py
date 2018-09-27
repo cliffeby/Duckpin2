@@ -347,7 +347,7 @@ with picamera.PiCamera() as camera:
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(30, 3, img_rgb)
-        if frameno%2 == 0:
+        if frameNo%2 == 0:
             findPins()
         
         # key = cv2.waitKey(1000) & 0xFF
