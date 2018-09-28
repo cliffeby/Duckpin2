@@ -83,7 +83,7 @@ def detect_motion():
     return True
        
 # initialize the camera and grab a reference to the raw camera capture
-cap = cv2.VideoCapture('C:/Users/cliff/OneDrive/pyProjects/videos/video0e.h264')
+cap = cv2.VideoCapture('C:/Users/cliff/OneDrive/pyProjects/videos/dp _1023_277_.h264')
 while(cap.isOpened()):
     ret, frame2 = cap.read()
     cv2.imshow('eee',frame2)

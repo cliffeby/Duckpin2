@@ -99,7 +99,7 @@ def findPins():
             priorPinCount = pinCount
             return True
     
-cap = cv2.VideoCapture('../videos/output2.mp4')
+cap = cv2.VideoCapture('C:/Users/cliff/OneDrive/pyProjects/videos/dp _1023_277_.h264')
 # setupGPIO(pinsGPIO)
 setterPresent = False
 armPresent = False
@@ -122,6 +122,7 @@ mask= frame1[650:900, 250:1300]
 frame1 = mask
 
 while(cap.isOpened()):
+    
     ret, frame2 = cap.read()
     try:
         type(frame2[0]) is None
@@ -144,9 +145,17 @@ while(cap.isOpened()):
 
     isPinSetter()
     frame2= frame2[650:900, 250:1300]
+    
     img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1,img_gray2)
+    diff2 = cv2.subtract(img_gray1,img_gray2)
+    diff_count = cv2.countNonZero(diff2)
+    if diff2 is True:
+        print('SAME')
+    else:
+        cv2.imshow('DIFF2', diff2)
+        print("different", diff_count)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
     ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
     frame = thresh
@@ -183,6 +192,7 @@ while(cap.isOpened()):
     tf = findPins()
 
     cv2.rectangle(img_rgb,b, a, 255,2)
+    frame1 = frame2
 
     # cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
     # writeImageSeries(135,20)
