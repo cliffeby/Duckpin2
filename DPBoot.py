@@ -9,7 +9,7 @@ import Iothub_client_functions as iot
 import picamera
 import io
 import threading
-import cropdata1440
+import cropdata1440  #cce data for Lane 4 at 1440x900
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
@@ -50,7 +50,7 @@ def bit_GPIO(pins,pinCount):
 
 def getMaskFrame():
     global mask_gray, resetArmCrops, ballCrops, img_gray1arm
-    frame1 = cv2.imread('/home/pi/Shared/histImage/BallMask.jpg',1)
+    frame1 = cv2.imread('/home/pi/Shared/histImage/BallMask.jpg',1)  # Prestored image to create a clean mask image for reset arm and ball approach
     img_arm = getCroppedImage(frame1, resetArmCrops)
     (h,w,d) = img_arm.shape
     img_gray1arm = cv2.cvtColor(img_arm, cv2.COLOR_BGR2GRAY)
@@ -72,7 +72,7 @@ def write_video(stream,result):
     if frameNo < videoReadyFrameNo + 120:
         return
     videoReadyFrameNo = frameNo
-    print("writng dp ", result)
+    print("writng buffer contents to ram ", result)
     #setup ram dsk
 
 
@@ -114,12 +114,12 @@ def isPinSetter():
     area = 0
     for cnt in contours:
         #Contour area is measured
-        area = cv2.contourArea(cnt) +area
+        area = cv2.contourArea(cnt) + area
     if area >1000:
         setterPresent = True
     if setterPresent:
-        activity = activity + str(priorPinCount)+ ',-2,'
-        print("Green", area, frameNo, activity)
+        activity = activity + str(priorPinCount) + ',-2,'
+        print("Setter Present", area, frameNo, activity)
     return
 
 def isResetArm():
@@ -325,6 +325,9 @@ with picamera.PiCamera() as camera:
             ballCounter = 0
             continue
 
+        # BALL - the following code attempted to detect and count the number of balls thrown
+        # BALL - A laser tripwire is being investigateed.  Ball location and velocity is being captured in post processing.
+
         # frame2= getCroppedImage(frame2, ballCrops)
         # # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         # img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
@@ -346,9 +349,9 @@ with picamera.PiCamera() as camera:
         #         print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
         # else:
         #     ballPresent = True
-       
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(30, 3, img_rgb)
+        
         if frameNo%2 == 0:
             findPins()
         
