@@ -23,30 +23,31 @@ def basic_blockblob_operations(account):
         blockblob_service = account.create_block_blob_service()
         blockblob_service = BlockBlobService(account_name, account_key)
         
-        # List all the blobs in the container 
+        # Check if blobs exist in Azure container, and 
+        # List and download all the blobs in the container 
         dpContainer = 'jsoncontdp'
         print('List Blobs in Container')    
         generator = blockblob_service.list_blobs(dpContainer)
         if sum(1 for _ in generator) == 0:
             print('No blobs to process -- program ending')
-            # exit(0)
+            exit(0)
         for blob in generator:
             print('\tBlob Name: ' + blob.name)
             file = blob.name
         
-            # Download the blob
+        # Download the blob
             downloadDir = 'c:/DownloadsDP/' 
             print('Download the blob', file, 'path', downloadDir)
             blockblob_service.get_blob_to_path(dpContainer, file, downloadDir+file)
-                # blockblob_service.get_blob_to_path(dpContainer, file, os.path.join(os.path.dirname(__file__)+'/'+ file))
         
-        # Clean up after the sample
+        # Delete blob from Azure container
             print('Delete  Blob ', downloadDir+file)
             blockblob_service.delete_blob(dpContainer, file)
 
         
 def findBeg(file):
     # Parse file name for beginning and ending pin state
+    # File name format is C:/DownloadsDP/Lane4Free\dp _1023_695_.h264
     index = 0
     loc = []
     pinsBA = [0,0]
@@ -62,7 +63,7 @@ def findBeg(file):
     return pinsBA
 
 def formatxy(pinData):
-    # Put ball xy data in jscon format
+    # Put ball xy data in json format
     xy = {} #empty dictionary
     counter = 0
     while counter < len(pinData) and counter < 5:  # counter > 5 - to elinimate lingering ball or downed pin noise
@@ -72,32 +73,33 @@ def formatxy(pinData):
     return xy
 
 def insertRows(file, xy):
-        global pinData, account
-        print('Azure Storage Table Duckpins - Starting row entry.')
-        table_service = None
-           
-        def getRowKey():
-            #Azure tables need a unique row key
-            x= datetime.datetime.now()
-            rowID = x.strftime('%Y')+x.strftime('%m')+ x.strftime('%d')+x.strftime('%f')
-            return rowID
+    # Insert row into Azure table
+    global pinData, account
+    print('Azure Storage Table Duckpins - Starting row entry.')
+    table_service = None
         
-        table_service = account.create_table_service()
-        table_name = 'pindata'
-        # Create a new table
-        try:
-            table_service.create_table(table_name)
-        except Exception as err:
-            print('Error creating table, ' + table_name + 'check if it already exists')
-        rowkey = str(getRowKey())
-        pinevent ={'PartitionKey':'Lane 4','RowKey': rowkey, 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
-        if len(xy) < 2:  #In a dictionary the key and value are counted ar one entry
-            print('Entry only contains one xy pair and has been removed ', rowkey)
-            return
-        pinevent.update(xy)
-       # Insert the entity into the table
-        table_service.insert_entity(table_name, pinevent)        
-        print('Successfully inserted the new entity into table - ' + file, table_name, pinevent)
+    def getRowKey():
+        #Azure tables need a unique row key
+        x= datetime.datetime.now()
+        rowID = x.strftime('%Y')+x.strftime('%m')+ x.strftime('%d')+x.strftime('%f')
+        return rowID
+    
+    table_service = account.create_table_service()
+    table_name = 'pindata'
+    # Create a new table
+    try:
+        table_service.create_table(table_name)
+    except Exception as err:
+        print('Error creating table, ' + table_name + 'check if it already exists')
+    rowkey = str(getRowKey())
+    pinevent ={'PartitionKey':'Lane 4','RowKey': rowkey, 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
+    if len(xy) < 2:  #In a dictionary the key and value are counted ar one entry
+        print('Entry only contains one xy pair and has been removed ', rowkey)
+        return
+    pinevent.update(xy)
+    # Insert the entity into the table
+    table_service.insert_entity(table_name, pinevent)        
+    print('Successfully inserted the new entity into table - ' + file, table_name, pinevent)
 
 
 
@@ -116,11 +118,15 @@ def cleanup():
             print("Error: %s file not found" % a[fileCounter])
         fileCounter += 1
 
+def my_division(n, d):
+    return n / d if d else 0
+
 
 basic_blockblob_operations(account)
 a = []
-a = glob.glob('C:/DownloadsDP/Lane4Free/dp*.h264')
+a = glob.glob('C:/DownloadsDP/Lane4Free1/dp*.h264')
 xyData = [0,0]
+oldxyData = None
 pinData = []
 fileCounter = 0
 cap = cv2.VideoCapture(a[0])
@@ -128,6 +134,8 @@ ret, frame1 = cap.read()
 frame1= getCroppedImage(frame1,ball_crops)
 img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 img_gray_show = img_gray1.copy()
+img_gray_show_base = img_gray1.copy()
+img_gray_show_line = img_gray1.copy()
 
 while(cap.isOpened()):
     ret, frame2 = cap.read()
@@ -136,7 +144,7 @@ while(cap.isOpened()):
     except:
         print ("End of Video ", fileCounter)
         
-        if fileCounter < len(a):
+        if fileCounter < len(a)-1:
             cap.release()
             xy = formatxy(pinData)
             if len(xy)>0:
@@ -144,13 +152,21 @@ while(cap.isOpened()):
             else:
                 print('No ball data in Video ', fileCounter)
             # Get new video file
+            fileCounter = fileCounter+1
+            oldxyData = None
             cap = cv2.VideoCapture(a[fileCounter])
             ret, frame2 = cap.read()
-            fileCounter = fileCounter+1
+            
             pinData = []
+            img_gray_show = img_gray_show_base
         else:
-            print('No more data to process')
             cap.release()
+            xy = formatxy(pinData)
+            if len(xy)>0:
+                insertRows(a[fileCounter], xy)
+            else:
+                print('No ball data in Video ', fileCounter)
+            print('No more data to process')
             cleanup()
             break
     img_rgb = frame2
@@ -171,16 +187,21 @@ while(cap.isOpened()):
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
 		# only proceed if the radius meets a minimum size
-        if radius > 20:
+        if radius > 10:
             # draw the circle on the frame,
             # then update the list of tracked points
             M = cv2.moments(c)
-            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+            center =  center = (int(my_division(M["m10"],M["m00"])), int(my_division( M["m01"], M["m00"])))
             xyData = (center[0], center[1])
             pinData.append(xyData)
             cv2.drawContours(img_gray_show, cnts, -1, (0,255,0), 3)
+            if oldxyData != None:
+                cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0,255,0),1)
+                cv2.circle(img_gray_show_line, xyData,3, (0,255,0),-1)
+            oldxyData = xyData
 
     cv2.imshow('Ball locations' , img_gray_show)
+    cv2.imshow('Ball line' , img_gray_show_line)
     # if frameNo < 100:
     #     cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgray' +str(frameNo) +'.jpg',img_gray_show )
     #     print('Saving image ', frameNo)
