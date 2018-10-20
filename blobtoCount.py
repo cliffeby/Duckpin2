@@ -19,30 +19,30 @@ ball_crops = cropdata1440.ballCrops
 
 def basic_blockblob_operations(account):
 
-        # # Create a Block Blob Service object
-        blockblob_service = account.create_block_blob_service()
-        blockblob_service = BlockBlobService(account_name, account_key)
-        
-        # Check if blobs exist in Azure container, and 
-        # List and download all the blobs in the container 
-        dpContainer = 'jsoncontdp'
-        print('List Blobs in Container')    
-        generator = blockblob_service.list_blobs(dpContainer)
-        if sum(1 for _ in generator) == 0:
-            print('No blobs to process -- program ending')
-            exit(0)
-        for blob in generator:
-            print('\tBlob Name: ' + blob.name)
-            file = blob.name
-        
-        # Download the blob
-            downloadDir = 'c:/DownloadsDP/' 
-            print('Download the blob', file, 'path', downloadDir)
-            blockblob_service.get_blob_to_path(dpContainer, file, downloadDir+file)
-        
-        # Delete blob from Azure container
-            print('Delete  Blob ', downloadDir+file)
-            blockblob_service.delete_blob(dpContainer, file)
+    # # Create a Block Blob Service object
+    blockblob_service = account.create_block_blob_service()
+    blockblob_service = BlockBlobService(account_name, account_key)
+    
+    # Check if blobs exist in Azure container, and 
+    # List and download all the blobs in the container 
+    dpContainer = 'jsoncontdp'
+    print('List Blobs in Container')    
+    generator = blockblob_service.list_blobs(dpContainer)
+    if sum(1 for _ in generator) == 0:
+        print('No blobs to process -- program ending')
+        exit(0)
+    for blob in generator:
+        print('\tBlob Name: ' + blob.name, blob.properties)
+        file = blob.name
+    
+    # Download the blob
+        downloadDir = 'c:/DownloadsDP/' 
+        print('Download the blob', file, 'path', downloadDir)
+        blockblob_service.get_blob_to_path(dpContainer, file, downloadDir+file)
+    
+    # Delete blob from Azure container
+        print('Delete  Blob ', downloadDir+file)
+        blockblob_service.delete_blob(dpContainer, file)
 
         
 def findBeg(file):
@@ -66,7 +66,7 @@ def formatxy(pinData):
     # Put ball xy data in json format
     xy = {} #empty dictionary
     counter = 0
-    while counter < len(pinData) and counter < 5:  # counter > 5 - to elinimate lingering ball or downed pin noise
+    while counter < len(pinData) and counter < 6:  # counter > 5 - to elinimate lingering ball or downed pin noise
             extra = {'x' + str(counter) : str(pinData[counter][0]) , 'y' +str(counter): str(pinData[counter][1])}
             xy.update(extra)
             counter = counter+1
@@ -124,7 +124,7 @@ def my_division(n, d):
 
 basic_blockblob_operations(account)
 a = []
-a = glob.glob('C:/DownloadsDP/Lane4Free1/dp*.h264')
+a = glob.glob('C:/DownloadsDP/Lane4Free/dp*.h264')
 xyData = [0,0]
 oldxyData = None
 pinData = []
@@ -167,6 +167,8 @@ while(cap.isOpened()):
             else:
                 print('No ball data in Video ', fileCounter)
             print('No more data to process')
+            cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline.jpg',img_gray_show_line )
+            print('Saving line image ')
             cleanup()
             break
     img_rgb = frame2
@@ -198,6 +200,7 @@ while(cap.isOpened()):
             if oldxyData != None:
                 cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0,255,0),1)
                 cv2.circle(img_gray_show_line, xyData,3, (0,255,0),-1)
+                cv2.circle(img_gray_show_line, oldxyData,3, (0,255,0),-1)
             oldxyData = xyData
 
     cv2.imshow('Ball locations' , img_gray_show)
