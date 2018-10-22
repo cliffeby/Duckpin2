@@ -189,7 +189,7 @@ while(cap.isOpened()):
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
 		# only proceed if the radius meets a minimum size
-        if radius > 10:
+        if radius > 20:
             # draw the circle on the frame,
             # then update the list of tracked points
             M = cv2.moments(c)
