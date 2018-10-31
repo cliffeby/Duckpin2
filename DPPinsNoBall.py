@@ -74,8 +74,7 @@ def write_video(stream,result):
     videoReadyFrameNo = frameNo
     print("writng dp ", result)
     #setup ram dsk
-
-
+     # Wipe the circular stream once we're done
     with io.open('/dp/log/firstFile.h264', 'wb') as output:
         for frame in stream.frames:
             if frame.frame_type == picamera.PiVideoFrameType.sps_header:
@@ -187,8 +186,8 @@ def findPins():
                 if timesup == False:
                     return
                 else:
-                    result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
-                    print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
+                    result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_"
+                    print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )
                     if priorPinCount == 1023:
                         write_video(stream, result)
                     priorPinCount = pinCount
