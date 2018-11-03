@@ -10,14 +10,18 @@ import picamera
 import io
 import threading
 import cropdata1440
+import myGPIO
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
-pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
+pinsGPIO = myGPIO.pinsGPIO  # [15,14,3,2,21,20,16,5,26,6]
+segment7s = myGPIO.segment7s
+segment7All = myGPIO.segment7All
+sensor = myGPIO.sensor
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
-resetArmCrops = [86,500,1185,1350]
+resetArmCrops = [86,300,1220,1350]
 pinSetterCrops = cropdata1440.pinSetterCrops
 ballCrops = cropdata1440.ballCrops
 
@@ -259,7 +263,45 @@ def drawPinRectangles():
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
 
+def timeout():
+    global timesup
+    timesup = True
+    print('Timer is finished', timesup)
+
+def trip():
+    global sensor, ballCounter, segment7s, segment7All
+    GPIO.setup(sensor[0], GPIO.OUT)
+    GPIO.output(sensor[0], GPIO.LOW)
+    time.sleep(.5)
+    GPIO.setup(sensor[0], GPIO.IN)
+    light = 0
+    timesup = True
+    while True:
+        if (GPIO.input(sensor[0]) == GPIO.LOW):
+            if (light == 0):
+                # print('light = 0 and input low')
+                continue
+            print('no ball')
+            light = 0
+        else:
+            if timesup == False:
+                # print('light = 1 and input high')
+                continue
+            print('BALLLLLLL ', ballCounter)
+            lightsOFF(segment7s)
+            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+            light = 1
+            ballCounter = ballCounter +1
+            time.sleep(.5)
+            timesup = True
+
+def lightsOFF(pins):
+    for pin in pins:
+        GPIO.output(pin, GPIO.HIGH)
+
 setupGPIO(pinsGPIO)
+setupGPIO(segment7s)
+setupGPIO(sensor)
 getMaskFrame()
 setterPresent = False
 armPresent = False
@@ -276,6 +318,8 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
+tt = threading.Thread(target= trip, name = 'tripThread')
+tt.start()
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
