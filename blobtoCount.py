@@ -1,6 +1,6 @@
 # import the necessary packages
 import random, string
-import datetime
+import datetime, copy
 import credentials
 from azure.storage import CloudStorageAccount
 from azure.storage.table import TableService, Entity
@@ -133,9 +133,8 @@ cap = cv2.VideoCapture(a[0])
 ret, frame1 = cap.read()
 frame1= getCroppedImage(frame1,ball_crops)
 img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-img_gray_show = img_gray1.copy()
-img_gray_show_base = img_gray1.copy()
-img_gray_show_line = img_gray1.copy()
+img_gray_show = copy.deepcopy(img_gray1)
+img_gray_show_line = copy.deepcopy(img_gray1)
 
 while(cap.isOpened()):
     ret, frame2 = cap.read()
@@ -158,7 +157,7 @@ while(cap.isOpened()):
             ret, frame2 = cap.read()
             
             pinData = []
-            img_gray_show = img_gray_show_base
+            img_gray_show = copy.deepcopy(img_gray1)
         else:
             cap.release()
             xy = formatxy(pinData)
