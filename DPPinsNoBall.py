@@ -17,7 +17,7 @@ from PIL import Image
 pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
-resetArmCrops = [86,300,1220,1350]
+resetArmCrops = [86,500,1185,1350]
 pinSetterCrops = cropdata1440.pinSetterCrops
 ballCrops = cropdata1440.ballCrops
 
@@ -74,8 +74,7 @@ def write_video(stream,result):
     videoReadyFrameNo = frameNo
     print("writng dp ", result)
     #setup ram dsk
-
-
+     # Wipe the circular stream once we're done
     with io.open('/dp/log/firstFile.h264', 'wb') as output:
         for frame in stream.frames:
             if frame.frame_type == picamera.PiVideoFrameType.sps_header:
@@ -141,19 +140,18 @@ def isResetArm():
     # frame = threshArm
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
     threshArm = cv2.medianBlur(threshArm,15)
-    # cv2.imshow('arm trhesh', threshArm)
     cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
 
     if len(cnts) > 0:
 		# find the largest contour in the mask, then use
 		# it to compute the minimum enclosing circle and centroid
-        c = max(cnts, key=cv2.contourArea)
-        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        if radius > 2:
-            print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
-            armPresent = True
-            ballCounter = 0
+        # c = max(cnts, key=cv2.contourArea)
+        # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+        # if radius > 15:
+        print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
+        armPresent = True
+        ballCounter = 0
     return
 
 def findPins():
@@ -188,8 +186,8 @@ def findPins():
                 if timesup == False:
                     return
                 else:
-                    result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
-                    print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
+                    result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_"
+                    print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount )
                     if priorPinCount == 1023:
                         write_video(stream, result)
                     priorPinCount = pinCount
@@ -269,9 +267,9 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=10
+x=0
 x1=0 +x
-y=-24
+y=0
 y1=0 + y
 frameNo = 0
 ballCounter = 0
@@ -324,7 +322,6 @@ with picamera.PiCamera() as camera:
             armPresent = False
             ballPresent = False
             ballCounter = 0
-            writeImageSeries(2,3,frame2)
             continue
 
         # frame2= getCroppedImage(frame2, ballCrops)
@@ -350,7 +347,7 @@ with picamera.PiCamera() as camera:
         #     ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        writeImageSeries(30, 3, img_rgb)
+        # writeImageSeries(30, 3, img_rgb)
         if frameNo%2 == 0:
             findPins()
         
