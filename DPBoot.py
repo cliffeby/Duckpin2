@@ -269,9 +269,9 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=10
+x=5
 x1=0 +x
-y=-24
+y=-26
 y1=0 + y
 frameNo = 0
 ballCounter = 0
@@ -324,7 +324,7 @@ with picamera.PiCamera() as camera:
             armPresent = False
             ballPresent = False
             ballCounter = 0
-            writeImageSeries(2,3,frame2)
+            # writeImageSeries(2,3,frame2)
             continue
 
         # frame2= getCroppedImage(frame2, ballCrops)

@@ -7,17 +7,30 @@ from gpiozero import LightSensor
 
 # Arrays of GPIO pins for the three orientations of prototype
 
+# leds = [18, 24, 25, 7, 8, 23, 9, 4]
+# led0 = [18, 24, 25, 7, 8, 23]
+# led1 = [18, 24]
+# led2 = [18, 25, 7, 23, 9]
+# led3 = [18, 24, 25, 23, 9]
+# led4 = [18, 24, 8, 9]
+# led5 = [24, 25, 8, 23, 9]
+# led6 = [24, 25, 7, 8, 9]
+# led7 = [18, 24, 23]
+# led8 = [18, 24, 25, 7, 8, 23, 9]
+# led9 = [18, 24, 8, 23, 9]
+# ledAll = [led0, led1, led2, led3, led4, led5, led6, led7, led8, led9]
+
 leds = [18, 24, 25, 7, 8, 23, 9, 4]
 led0 = [18, 24, 25, 7, 8, 23]
 led1 = [18, 24]
 led2 = [18, 25, 7, 23, 9]
-led3 = [18, 24, 25, 23, 9]
+led3 = [18, 24, 25, 7, 9]
 led4 = [18, 24, 8, 9]
-led5 = [24, 25, 8, 23, 9]
-led6 = [24, 25, 7, 8, 9]
-led7 = [18, 24, 23]
+led5 = [24, 25, 8, 7, 9]
+led6 = [24, 25, 23, 8, 9]
+led7 = [18, 24, 7]
 led8 = [18, 24, 25, 7, 8, 23, 9]
-led9 = [18, 24, 8, 23, 9]
+led9 = [18, 24, 8, 7, 9]
 ledAll = [led0, led1, led2, led3, led4, led5, led6, led7, led8, led9]
 
 
@@ -38,11 +51,13 @@ def lightsOFF(pins):
 
 
 def lightTESTa(pins, wait1, wait2):
+    i=0
     for pin in pins:
-        print("Pin ", pin, "is on")
+        print("Pin ", pin, i ,"is on")
         GPIO.output(pin, GPIO.LOW)
         time.sleep(wait1)
         print("Pin ", pin, "is off")
+        i=i+1
         GPIO.output(pin, GPIO.HIGH)
         time.sleep(wait2)
 
@@ -117,12 +132,12 @@ def sensor():
 
 
 setupGPIO(leds)
-# lightsOFF(leds1)
-# lightTESTa(leds1,1,0)
+lightsOFF(ledAll)
+lightTESTa(ledAll,1,0)
 # lightTESTa(leds1[::-1], 0.5,0)
 lightsOFF(leds)
 # listTEST(ledAll)
-trip()
+# trip()
 # lightTESTa(leds,.1,0)
 # numTEST(led0,1)
 # lightsOFF(leds)

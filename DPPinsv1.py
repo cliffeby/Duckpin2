@@ -21,7 +21,7 @@ segment7All = myGPIO.segment7All
 sensor = myGPIO.sensor
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
-resetArmCrops = [86,300,1220,1350]
+resetArmCrops = [86,300,1020,1250]
 pinSetterCrops = cropdata1440.pinSetterCrops
 ballCrops = cropdata1440.ballCrops
 
@@ -157,12 +157,13 @@ def isResetArm():
         print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
         armPresent = True
         ballCounter = 0
+        GPIO.output((segment7All[0]), GPIO.LOW)
     return
 
 def findPins():
         global x,x1,y,y1
         global priorPinCount, frameNo
-        global img_rgb
+        global img_rgb,pinsGPIO
         global frame2
         global pinsFalling, timesup  # initial values False, True
         def timeout():
@@ -235,7 +236,7 @@ def iotSend(buf, result):
 
 def drawPinRectangles():
     global ball_image,img_rgb,x,y
-    global pin_crop_ranges
+    global pin_crop_ranges, resetArmCrops
     mx=x
     my=y
     ball_image = img_rgb
@@ -289,10 +290,12 @@ def trip():
                 continue
             print('BALLLLLLL ', ballCounter)
             lightsOFF(segment7s)
-            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+            
             light = 1
             ballCounter = ballCounter +1
             time.sleep(.5)
+            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+            print('Ball Timer Awake ', ballCounter)
             timesup = True
 
 def lightsOFF(pins):
@@ -302,6 +305,8 @@ def lightsOFF(pins):
 setupGPIO(pinsGPIO)
 setupGPIO(segment7s)
 setupGPIO(sensor)
+lightsOFF(segment7s)
+GPIO.output((segment7All[0]), GPIO.LOW)
 getMaskFrame()
 setterPresent = False
 armPresent = False
@@ -310,9 +315,9 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=0
+x=5
 x1=0 +x
-y=0
+y=-26
 y1=0 + y
 frameNo = 0
 ballCounter = 0
@@ -392,7 +397,7 @@ with picamera.PiCamera() as camera:
         #     ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        # writeImageSeries(30, 3, img_rgb)
+        writeImageSeries(30, 3, img_rgb)
         if frameNo%2 == 0:
             findPins()
         
