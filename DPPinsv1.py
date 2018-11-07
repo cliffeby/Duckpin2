@@ -174,6 +174,7 @@ def isResetArm():
        
         armPresent = True
         ballCounter = 0
+        lightsOFF(segment7s)
         GPIO.output((segment7All[0]), GPIO.LOW)
     return
 
