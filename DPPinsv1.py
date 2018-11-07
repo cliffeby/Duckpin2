@@ -73,8 +73,8 @@ def write_video(stream,result):
 # lock the stream here as we're definitely not writing to it
 # simultaneously
     global frameNo, videoReadyFrameNo
-    if frameNo < videoReadyFrameNo + 120:
-        return
+    # if frameNo < videoReadyFrameNo + 120:
+    #     return
     videoReadyFrameNo = frameNo
     print("writng dp ", result)
     #setup ram dsk
@@ -95,6 +95,22 @@ def write_video(stream,result):
     # Wipe the circular stream once we're done
     stream.seek(0)
     stream.truncate()
+
+def write_video2(stream):
+    with io.open('/home/pi/Shared/videos/armFile.h264', 'wb') as output:
+        for frame in stream.frames:
+            if frame.frame_type == picamera.PiVideoFrameType.sps_header:
+                stream.seek(frame.position)
+                break
+        while True:
+            buf = stream.read1()
+            if not buf:
+                break
+            output.write(buf)
+            print('Arm video in videos/armFile')
+    stream.seek(0)
+    stream.truncate()
+
 
 def isPinSetter():
     global setterPresent
@@ -144,7 +160,7 @@ def isResetArm():
     ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
     # frame = threshArm
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    threshArm = cv2.medianBlur(threshArm,15)
+    threshArm = cv2.medianBlur(threshArm,25)
     cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
 
@@ -155,6 +171,7 @@ def isResetArm():
         # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
         # if radius > 15:
         print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
+       
         armPresent = True
         ballCounter = 0
         GPIO.output((segment7All[0]), GPIO.LOW)
@@ -194,7 +211,7 @@ def findPins():
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
-                    if priorPinCount == 1023:
+                    if priorPinCount == 1024:
                         write_video(stream, result)
                     priorPinCount = pinCount
                     pinsFalling = False
@@ -368,6 +385,8 @@ with picamera.PiCamera() as camera:
         if armPresent:
             print ('ArmPresent', frameNo, ballCounter)
             bit_GPIO(pinsGPIO,1023)
+            write_video2(stream)
+            writeImageSeries(frameNo,1,img_gray2arm)
             time.sleep(10)
             armPresent = False
             ballPresent = False
