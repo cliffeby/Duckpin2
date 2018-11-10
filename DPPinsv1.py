@@ -14,6 +14,10 @@ import myGPIO
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
+from imutils.video import FPS
+import multiprocessing
+
+print ("cores",multiprocessing.cpu_count())
 
 pinsGPIO = myGPIO.pinsGPIO  # [15,14,3,2,21,20,16,5,26,6]
 segment7s = myGPIO.segment7s
@@ -295,6 +299,7 @@ def trip():
     GPIO.setup(sensor[0], GPIO.IN)
     light = 0
     timesup = True
+    counter = 0
     while True:
         if (GPIO.input(sensor[0]) == GPIO.LOW):
             if (light == 0):
@@ -315,6 +320,9 @@ def trip():
             GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
             print('Ball Timer Awake ', ballCounter)
             timesup = True
+        if counter%100:
+            print ('Multi', counter)
+        counter = counter +1
 
 def lightsOFF(pins):
     for pin in pins:
@@ -341,11 +349,14 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
-tt = threading.Thread(target= trip, name = 'tripThread')
+# tt = threading.Thread(target= trip, name = 'tripThread')
+# tt.start()
+tt = multiprocessing.Process(target=trip)
 tt.start()
+# tt.join()
 
 with picamera.PiCamera() as camera:
-    camera.resolution = setResolution()
+    # camera.resolution = setResolution()
     camera.video_stabilization = True
     camera.annotate_background = True
     camera.rotation = 180
@@ -360,7 +371,8 @@ with picamera.PiCamera() as camera:
     camera.wait_recording(2, splitter_port=1)
     # motion_detected = False
     print(camera.resolution)
-
+    startTime = time.time()
+   
     for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=True):
         # grab the raw NumPy array representing the image, then initialize the timestamp
         # and occupied/unoccupied text???????????????????
@@ -373,7 +385,7 @@ with picamera.PiCamera() as camera:
         frame2arm = getCroppedImage(frame2, resetArmCrops)
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
-        isPinSetter()   #Deadwood
+        # isPinSetter()   #Deadwood
         if setterPresent:
             print('SetterPresent', frameNo, ballCounter)
             bit_GPIO(pinsGPIO,priorPinCount)
@@ -382,7 +394,7 @@ with picamera.PiCamera() as camera:
             ballPresent = False
             continue
         
-        isResetArm()    #Reset
+        # isResetArm()    #Reset
         if armPresent:
             print ('ArmPresent', frameNo, ballCounter)
             bit_GPIO(pinsGPIO,1023)
@@ -417,9 +429,16 @@ with picamera.PiCamera() as camera:
         #     ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        writeImageSeries(30, 3, img_rgb)
+        # writeImageSeries(30, 3, img_rgb)
         if frameNo%2 == 0:
             findPins()
+        if frameNo%20 == 0:
+            stopTime = time.time()
+            elapsedTime = stopTime - startTime
+            fps = 20/elapsedTime
+            print("[INFO] elasped time: {:.2f}".format(elapsedTime))
+            print("[INFO] approx. FPS: {:.2f}".format(fps))
+            startTime = stopTime
         
         # key = cv2.waitKey(1000) & 0xFF
         # # if the `q` key was pressed, break from the loop
