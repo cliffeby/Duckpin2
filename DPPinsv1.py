@@ -360,7 +360,7 @@ p.start()
 # tt.join()
 
 with picamera.PiCamera() as camera:
-    # camera.resolution = setResolution()
+    camera.resolution = setResolution()
     camera.video_stabilization = True
     camera.annotate_background = True
     camera.rotation = 180
