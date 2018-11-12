@@ -9,6 +9,7 @@ import Iothub_client_functions as iot
 import picamera
 import io
 import threading
+from multiprocessing import Process, Value, Array, Queue, Pipe
 import cropdata1440
 import myGPIO
 from picamera.array import PiRGBArray
@@ -291,7 +292,7 @@ def timeout():
     timesup = True
     print('Timer is finished', timesup)
 
-def trip():
+def trip(conn):
     global sensor, ballCounter, segment7s, segment7All
     GPIO.setup(sensor[0], GPIO.OUT)
     GPIO.output(sensor[0], GPIO.LOW)
@@ -316,13 +317,13 @@ def trip():
             
             light = 1
             ballCounter = ballCounter +1
-            time.sleep(.5)
+            conn.send(ballCounter)
+            print ('Multi in trip()', ballCounter )
+            time.sleep(.2)
             GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
             print('Ball Timer Awake ', ballCounter)
             timesup = True
-        if counter%100:
-            print ('Multi', counter)
-        counter = counter +1
+        
 
 def lightsOFF(pins):
     for pin in pins:
@@ -349,10 +350,13 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
+main_conn, trip_conn = Pipe()
+p = Process(target = trip, args=(trip_conn,))
+p.start()
 # tt = threading.Thread(target= trip, name = 'tripThread')
 # tt.start()
-tt = multiprocessing.Process(target=trip)
-tt.start()
+# tt = multiprocessing.Process(target=trip)
+# tt.start()
 # tt.join()
 
 with picamera.PiCamera() as camera:
@@ -382,6 +386,7 @@ with picamera.PiCamera() as camera:
         frame2 = frame.array
         frameNo = frameNo +1
         img_rgb = frame2
+        # cv2.imshow('RBB', img_rgb)
         frame2arm = getCroppedImage(frame2, resetArmCrops)
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
@@ -430,6 +435,9 @@ with picamera.PiCamera() as camera:
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(30, 3, img_rgb)
+        if main_conn.recv() == ballCounter+1:
+                print('TRIP', main_conn.recv())
+                ballCounter = ballCounter +1
         if frameNo%2 == 0:
             findPins()
         if frameNo%20 == 0:
@@ -440,7 +448,8 @@ with picamera.PiCamera() as camera:
             print("[INFO] approx. FPS: {:.2f}".format(fps))
             startTime = stopTime
         
-        # key = cv2.waitKey(1000) & 0xFF
-        # # if the `q` key was pressed, break from the loop
-        # if key == ord("q"):
-        #     break
+        key = cv2.waitKey(1) & 0xFF
+        # if the `q` key was pressed, break from the loop
+        if key == ord("q"):
+            camera.close()
+            break
