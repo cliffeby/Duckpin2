@@ -15,7 +15,7 @@ def camPreview(howLong):
 
 def camRotation(degrees):
     camera.start_preview
-    camera.rotation = 90
+    camera.rotation = degrees
     camera.start_preview()
     sleep(1)
     camera.stop_preview()
@@ -84,9 +84,9 @@ def camVideoCapture(numberOfVideos, videoLength, delayBetweenVideos):
 
 # camera.vflip = True
 # camera.hflip = False
-# camRotation(0)
+camRotation(180)
 # camPreview(10)
 # camBrightness()
 # camContrast()
 camPicCapture(5, 1)
-camVideoCapture(3, 3, 1)
+camVideoCapture(3, 10, 1)
