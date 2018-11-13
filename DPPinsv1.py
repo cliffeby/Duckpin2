@@ -293,7 +293,7 @@ def timeout():
     print('Timer is finished', timesup)
 
 def trip(conn):
-    global sensor, ballCounter, segment7s, segment7All
+    global sensor, segment7s, segment7All
     GPIO.setup(sensor[0], GPIO.OUT)
     GPIO.output(sensor[0], GPIO.LOW)
     time.sleep(.5)
@@ -301,10 +301,13 @@ def trip(conn):
     light = 0
     timesup = True
     counter = 0
+    ballCounter = 0
+    print(sensor,segment7All,segment7s)
     while True:
         if (GPIO.input(sensor[0]) == GPIO.LOW):
             if (light == 0):
                 # print('light = 0 and input low')
+                ballCounter = conn.recv()
                 continue
             print('no ball')
             light = 0
@@ -360,7 +363,7 @@ p.start()
 # tt.join()
 
 with picamera.PiCamera() as camera:
-    # camera.resolution = setResolution()
+    camera.resolution = setResolution()
     camera.video_stabilization = True
     camera.annotate_background = True
     camera.rotation = 180
