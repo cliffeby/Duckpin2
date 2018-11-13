@@ -1,3 +1,4 @@
 # ignore credentials
 credentials.py
 __pycache__/
+.vscode/
