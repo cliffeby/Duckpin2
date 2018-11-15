@@ -3,13 +3,13 @@
 import time
 import cv2
 import numpy
+import cropdata640
 # import RPi.GPIO as GPIO
 # from matplotlib import pyplot as plt
 
 # crop_ranges are y,y1,x,x1 from top left
-mask_crop_ranges = ([300,475,20,580],[0,0,0,0])
-pin_crop_ranges = ([235,260, 315,340],[205,230, 290,315],[205,230,365,390],[180,205, 260,280],[180,205, 335,360],
-    [180,205, 410,435],[155,180, 250,275],[155,180, 315,335],[155,180, 380,400],[155,180, 450,470])
+mask_crop_ranges = cropdata640.ballCrops
+pin_crop_ranges = cropdata640.pin_crop_ranges
 
 def writeImageSeries(frameNoStart, numberOfFrames, img_rgb):
     if frameNoStart <= frameNo:
@@ -68,9 +68,13 @@ def findPins():
         threshold = 3
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
-                hist = cv2.calcHist([crop[i]],[1],None,[4], [10,50])
+                hist = cv2.calcHist([crop[i]],[1],None,[4], [0,256])
+                if frameNo == 34:
+                    print(hist)
                 sumHist[i] = hist[0]+hist[1]+hist[2]+hist[3]
- 
+                if frameNo > 30:
+                    if frameNo < 130:
+                        print (i, sumHist[i])
                 if threshold < sumHist[i]:
                     pinCount = pinCount + 2**(9-i)
                 
@@ -83,7 +87,7 @@ def findPins():
             priorPinCount = pinCount
             return True
     
-cap = cv2.VideoCapture('../videos/xxx/output.mp4')
+cap = cv2.VideoCapture('../vidim/None/video0.h264')
 # setupGPIO(pinsGPIO)
 setterPresent = False
 armPresent = False
