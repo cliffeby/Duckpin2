@@ -1,5 +1,6 @@
 # import the necessary packages
 
+from threading import Timer
 import time
 import cv2
 import numpy
@@ -10,6 +11,7 @@ import statistics, collections
 
 pinsGPIO = [6, 26, 20, 5, 21, 3, 16, 2, 14, 15]
 mask_crop_ranges = cropdata640.ballCrops
+ballCrops = cropdata640.ballCrops
 pin_crop_ranges = cropdata640.pin_crop_ranges
 resetArmCrops = cropdata640.resetArmCrops
 pinSetterCrops = cropdata640.pinSetterCrops
@@ -47,9 +49,11 @@ def isPinSetter():
     global setterPresent
     global frameNo
     global img_rgb
-    global firstSetterFrame  
+    global firstSetterFrame
+    global activity
+    
     # Convert BGR to HSV
-    frame = img_rgb[50:150, 200:400]
+    frame =  getCroppedImage(img_rgb, pinSetterCrops)
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     # define range of green color in HSV
     lower_green = numpy.array([65,60,60])
@@ -64,18 +68,47 @@ def isPinSetter():
     for cnt in contours:
         #Contour area is measured
         area = cv2.contourArea(cnt) +area
-    if area >10000:
+    if area >1000:
         setterPresent = True
-        firstSetterFrame = frameNo
     if setterPresent:
-        print("Green", area, frameNo)
-    else:
-        firstSetterFrame = 0
+        activity = activity + str(priorPinCount)+ ',-2,'
+        print("Green", area, frameNo, activity)
+    return
 
-def arm():
-    global firstArmFrame
+def isResetArm():
+    global firstArmFrame, armPresent, ballCounter
     global frameNo
-    firstArmFrame = frameNo
+    global img_rgb
+    global img_gray1arm
+    global threshArm, tArmStart
+    global resetArmCrops
+    global priorPinCount
+    
+    frame2arm = getCroppedImage(img_rgb, resetArmCrops)
+    img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+    # print('IMG GRAY ARM', img_gray1arm, img_gray2arm, frame2arm, type(frame2arm))
+    # print(type(img_gray1arm), type(img_gray2arm))
+    diff = cv2.absdiff(img_gray1arm,img_gray2arm)
+    # First value reduces noise.  Values above 150 seem to miss certain ball colors
+    ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    # frame = threshArm
+    # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
+    threshArm = cv2.medianBlur(threshArm,15)
+    # cv2.imshow('arm trhesh', threshArm)
+    cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
+		cv2.CHAIN_APPROX_SIMPLE)[-2]
+
+    if len(cnts) > 0:
+		# find the largest contour in the mask, then use
+		# it to compute the minimum enclosing circle and centroid
+        c = max(cnts, key=cv2.contourArea)
+        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+        if radius > 2:
+            print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
+            armPresent = True
+            ballCounter = 0
+            tArmStart = time.time()
+    return
 
 def findPins():
         global x,x1,y,y1
@@ -120,6 +153,14 @@ def myModeFilter(index):
     else:
         return 0
 
+def resetResetVars():
+    global armPresent,ballPresent,ballCounter,tArmStart
+    armPresent = False
+    ballPresent = False
+    ballCounter = 0
+    tArmStart = 0
+    print('ResetArmVars')
+
 def drawPinRectangles():
     global ball_image,img_rgb,x,y
     global pin_crop_ranges, mask_crop_ranges
@@ -163,17 +204,21 @@ x1=0 +x
 y=-0
 y1=0 + y
 crop_ranges = mask_crop_ranges
-
+ballPresent = False
 frameNo = 0
 prevFrame = 0
-ballCounter = [0]*3
+ballCounter = 0
 origCounter = 0
+armPresent = False
+tArmStart = 0
 # for i in range(0,1):
 #     a =(int(crop_ranges[i][2]/2)+x,int(crop_ranges[i][0]/2)+y)
 #     b = (int(crop_ranges[i][3]/2)+x1, int(crop_ranges[i][1]/2)+y1)
 ret, frame1 = cap.read()
 mask= getCroppedImage(frame1,mask_crop_ranges)
-frame1 = mask
+mask_gray = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+frame1arm = getCroppedImage(frame1, resetArmCrops)
+img_gray1arm = cv2.cvtColor(frame1arm, cv2.COLOR_BGR2GRAY)
 
 while(cap.isOpened()):
     
@@ -183,67 +228,61 @@ while(cap.isOpened()):
     except:
         print ("New Video")
         cap.release()
+        break
         cap = cv2.VideoCapture('C:/Users/cliff/OneDrive/pyProjects/videos/640/video0.h264')
         ret, frame2 = cap.read()
     frameNo = frameNo +1
     img_rgb = frame2
 
+    isPinSetter()   #Deadwood
     if setterPresent:
-            if firstSetterFrame + 120 > frameNo:
-                continue
-    if armPresent:
-            if firstArmFrame + 120 > frameNo:
-                continue
-            if firstArmFrame+120 == frameNo:
-                armPresent = False
-
-    isPinSetter()
-    frame2= getCroppedImage(frame2, mask_crop_ranges)
+        print('SetterPresent', frameNo, ballCounter)
+        # bit_GPIO(pinsGPIO,priorPinCount)
+        time.sleep(.5)
+        setterPresent = False
+        ballPresent = False
+        continue
     
-    img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    diff = cv2.absdiff(img_gray1,img_gray2)
-    diff2 = cv2.subtract(img_gray1,img_gray2)
-    diff_count = cv2.countNonZero(diff2)
-    # if diff2 is True:
-    #     print('SAME')
-    # else:
-    #     cv2.imshow('DIFF2', diff2)
-    #     print("different", diff_count)
+    if armPresent == False:
+        isResetArm()    #Reset
+    else:
+        if time.time()-tArmStart >0.3:
+            resetResetVars()
+            print ('ArmPresent', frameNo, ballCounter) 
+        # bit_GPIO(pinsGPIO,1023)
+        
+        # time.sleep(.5)
+        # armPresent = False
+        # ballPresent = False
+        # ballCounter = 0
+        # writeImageSeries(2,3,frame2)
+        continue
+
+    frame2= getCroppedImage(frame2, ballCrops)
+    # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+    diff = cv2.absdiff(mask_gray,img_gray)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
     ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
     frame = thresh
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    thresh = cv2.medianBlur(thresh,9)
+    thresh = cv2.medianBlur(thresh,13)
+    # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-		cv2.CHAIN_APPROX_SIMPLE)[-2]
-    center = None
-    radius = 0
-    if len(cnts) > 0:
-		# find the largest contour in the mask, then use
-		# it to compute the minimum enclosing circle and centroid
-        c = max(cnts, key=cv2.contourArea)
-        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        # print('radius', radius, frameNo, len(cnts))
-        ballCounter[0]=0
-        ballCounter[1]=0
-        ballCounter[2]=0
-		# only proceed if the radius meets a minimum size
-        if radius > 20:
-            # draw the circle and centroid on the frame,
-            # then update the list of tracked points
-            M = cv2.moments(c)
-            center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-            cv2.drawContours(img_gray2, cnts, -1, (0,255,0), 3)
-            if center < (510,480):
-                    print('CENTER',center, radius, frameNo, len(cnts))
-                    # cv2.imwrite('P:videos/cv2Img'+str(frameNo)+'.jpg',img_gray2)
-                    continue
-            else:
-                firstArmFrame = frameNo
-                armPresent = True
+        cv2.CHAIN_APPROX_SIMPLE)[-2]
+    # center = None
+    # radius = 0
+    if armPresent == False:
+        if len(cnts) == 0:
+            if ballPresent == True :
+                ballPresent = False
+                ballCounter = ballCounter + 1
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
+        else:
+            ballPresent = True
+
     cv2.imshow('All', img_rgb)
-    cv2.imshow('Ball', img_gray2)
+    cv2.imshow('Ball', img_gray)
     cv2.imshow('Thresh' , thresh)
     tf = findPins()
 
