@@ -330,7 +330,7 @@ with picamera.PiCamera() as camera:
         if setterPresent:
             print('SetterPresent', frameNo, ballCounter)
             bit_GPIO(pinsGPIO,priorPinCount)
-            time.sleep(10)
+            time.sleep(7)
             setterPresent = False
             ballPresent = False
             continue
@@ -338,7 +338,7 @@ with picamera.PiCamera() as camera:
         if armPresent == False:
             isResetArm()    #Reset
         else:
-            if time.time()-tArmStart >0.3:
+            if time.time()-tArmStart >7:
                 resetResetVars()
                 print ('ArmPresent', frameNo, ballCounter) 
         
