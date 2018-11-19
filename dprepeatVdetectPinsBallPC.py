@@ -1,6 +1,5 @@
 # import the necessary packages
 
-from threading import Timer
 import time
 import cv2
 import numpy
@@ -238,7 +237,7 @@ while(cap.isOpened()):
     if setterPresent:
         print('SetterPresent', frameNo, ballCounter)
         # bit_GPIO(pinsGPIO,priorPinCount)
-        time.sleep(.5)
+        time.sleep(10)
         setterPresent = False
         ballPresent = False
         continue

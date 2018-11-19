@@ -3,18 +3,18 @@
 import time
 from datetime import datetime
 import cv2
-import numpy
+import numpy, statistics, collections
 import RPi.GPIO as GPIO
 import Iothub_client_functions as iot
 import picamera
-import io
-import threading
+import io, threading
 import cropdata640
+import myGPIO
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
-pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
+pinsGPIO = myGPIO.pinsGPIO
 pin_crop_ranges = cropdata640.pin_crop_ranges
 resetArmCrops = cropdata640.resetArmCrops
 pinSetterCrops = cropdata640.pinSetterCrops
@@ -189,8 +189,8 @@ def findPins():
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
-                    if priorPinCount == 1023:
-                        write_video(stream, result)
+                    # if priorPinCount == 1023:
+                    #     write_video(stream, result)
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
@@ -204,6 +204,23 @@ def findPins():
             t.start() # after 2.0 seconds, stream will be saved
             print ('timer is running', priorPinCount, pinCount)
             return
+
+def myModeFilter(index):
+    global pinCounts
+    pinCounts[index].append(1)
+    newValue = statistics.mode(pinCounts[index])
+    if newValue ==1:
+        return 2**(9-index)
+    else:
+        return 0
+
+def resetResetVars():
+    global armPresent,ballPresent,ballCounter,tArmStart
+    armPresent = False
+    ballPresent = False
+    ballCounter = 0
+    tArmStart = 0
+    print('ResetArmVars')
 
 def iotSend(buf, result):
     global frameNo
@@ -261,6 +278,8 @@ def drawPinRectangles():
 
 setupGPIO(pinsGPIO)
 getMaskFrame()
+bitBuckets =  collections.deque(9*[1], 9)
+pinCounts =[bitBuckets for x in range(10)]
 setterPresent = False
 armPresent = False
 ballPresent = False
@@ -276,6 +295,7 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
+tArmStart = 0
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
@@ -315,45 +335,43 @@ with picamera.PiCamera() as camera:
             ballPresent = False
             continue
         
-        isResetArm()    #Reset
-        if armPresent:
-            print ('ArmPresent', frameNo, ballCounter)
-            bit_GPIO(pinsGPIO,1023)
-            time.sleep(10)
-            armPresent = False
-            ballPresent = False
-            ballCounter = 0
-            # writeImageSeries(2,3,frame2)
-            continue
-
-        # frame2= getCroppedImage(frame2, ballCrops)
-        # # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        # img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-        # diff = cv2.absdiff(mask_gray,img_gray)
-        # # First value reduces noise.  Values above 150 seem to miss certain ball colors
-        # ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
-        # frame = thresh
-        # # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-        # thresh = cv2.medianBlur(thresh,13)
-        # # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
-        # cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-        #     cv2.CHAIN_APPROX_SIMPLE)[-2]
-        # # center = None
-        # # radius = 0
-        # if len(cnts) == 0:
-        #     if ballPresent == True:
-        #         ballPresent = False
-        #         ballCounter = ballCounter + 1
-        #         print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
-        # else:
-        #     ballPresent = True
-       
-        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        writeImageSeries(30, 3, img_rgb)
-        if frameNo%2 == 0:
-            findPins()
+        if armPresent == False:
+            isResetArm()    #Reset
+        else:
+            if time.time()-tArmStart >0.3:
+                resetResetVars()
+                print ('ArmPresent', frameNo, ballCounter) 
         
-        # key = cv2.waitKey(1000) & 0xFF
-        # # if the `q` key was pressed, break from the loop
-        # if key == ord("q"):
-        #     break
+    frame2= getCroppedImage(frame2, ballCrops)
+    # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+    diff = cv2.absdiff(mask_gray,img_gray)
+    # First value reduces noise.  Values above 150 seem to miss certain ball colors
+    ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    frame = thresh
+    # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
+    thresh = cv2.medianBlur(thresh,13)
+    # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE)[-2]
+    # center = None
+    # radius = 0
+    if armPresent == False:
+        if len(cnts) == 0:
+            if ballPresent == True :
+                ballPresent = False
+                ballCounter = ballCounter + 1
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
+        else:
+            ballPresent = True
+
+       
+    # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
+    writeImageSeries(30, 3, img_rgb)
+    if frameNo%2 == 0:
+        findPins()
+    
+    # key = cv2.waitKey(1000) & 0xFF
+    # # if the `q` key was pressed, break from the loop
+    # if key == ord("q"):
+    #     break
