@@ -272,13 +272,25 @@ while(cap.isOpened()):
     # center = None
     # radius = 0
     if armPresent == False:
-        if len(cnts) == 0:
-            if ballPresent == True :
-                ballPresent = False
-                ballCounter = ballCounter + 1
-                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
-        else:
-            ballPresent = True
+        # if len(cnts) == 0:
+        #     if ballPresent == True :
+        #         ballPresent = False
+        #         ballCounter = ballCounter + 1
+        #         print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
+        # else:
+        #     ballPresent = True
+        if len(cnts) > 0:
+            c = max(cnts, key=cv2.contourArea)
+            ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+            print(radius, xContour, yContour)
+            if radius > 15 and radius < 40:
+                if ballPresent == True :
+                    ballPresent = False
+                   
+                else:
+                    ballPresent = True
+                    ballCounter = ballCounter + 1
+                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
 
     cv2.imshow('All', img_rgb)
     cv2.imshow('Ball', img_gray)

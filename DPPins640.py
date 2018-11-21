@@ -15,6 +15,8 @@ import picamera.array
 from PIL import Image
 
 pinsGPIO = myGPIO.pinsGPIO
+segment7s = myGPIO.segment7s
+segment7All = myGPIO.segment7All
 pin_crop_ranges = cropdata640.pin_crop_ranges
 resetArmCrops = cropdata640.resetArmCrops
 pinSetterCrops = cropdata640.pinSetterCrops
@@ -168,19 +170,20 @@ def findPins():
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
-        lower_red = numpy.array([170, 100, 100])
-        upper_red = numpy.array([180, 255, 255])       
-        img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(img_rgb,lower_red,upper_red)
-        output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
-        threshold1 = 4
+        lower_red = numpy.array([0,180,80])
+        upper_red = numpy.array([10,220,190])       
+        img_hsv = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(img_hsv,lower_red,upper_red)
+        output = cv2.bitwise_and(img_hsv, img_hsv, mask=mask)
+        threshold = 1
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
-                hist = cv2.calcHist([crop[i]],[1],None,[4], [10,50])
+                hist = cv2.calcHist([crop[i]],[1],None,[4], [1,255])
                 sumHist[i] = hist[0]+hist[1]+hist[2]+hist[3]
-                print (i, sumHist[i])
-                if threshold1 < sumHist[i]:
-                    pinCount = pinCount + 2**(9-i)
+                # print (i, sumHist[i])
+                if threshold < sumHist[i]:
+                    pinCount = pinCount + myModeFilter(i)
+
 
         bit_GPIO(pinsGPIO,pinCount)
         if pinsFalling == True:
@@ -202,7 +205,7 @@ def findPins():
             t = threading.Timer(2.0, timeout)
             timesup = False
             t.start() # after 2.0 seconds, stream will be saved
-            print ('timer is running', priorPinCount, pinCount)
+            # print ('timer is running', priorPinCount, pinCount)
             return
 
 def myModeFilter(index):
@@ -219,7 +222,7 @@ def resetResetVars():
     armPresent = False
     ballPresent = False
     ballCounter = 0
-    tArmStart = 0
+    tArmStart = time.time()
     print('ResetArmVars')
 
 def iotSend(buf, result):
@@ -295,7 +298,7 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
-tArmStart = 0
+tArmStart = time.time()
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
@@ -330,7 +333,7 @@ with picamera.PiCamera() as camera:
         if setterPresent:
             print('SetterPresent', frameNo, ballCounter)
             bit_GPIO(pinsGPIO,priorPinCount)
-            time.sleep(10)
+            time.sleep(7)
             setterPresent = False
             ballPresent = False
             continue
@@ -338,40 +341,48 @@ with picamera.PiCamera() as camera:
         if armPresent == False:
             isResetArm()    #Reset
         else:
-            if time.time()-tArmStart >0.3:
+            # if time.time()-tArmStart >10:
+                time.sleep(10)
                 resetResetVars()
                 print ('ArmPresent', frameNo, ballCounter) 
+                continue
         
-    frame2= getCroppedImage(frame2, ballCrops)
-    # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    diff = cv2.absdiff(mask_gray,img_gray)
-    # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
-    frame = thresh
-    # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    thresh = cv2.medianBlur(thresh,13)
-    # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
-    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE)[-2]
-    # center = None
-    # radius = 0
-    if armPresent == False:
-        if len(cnts) == 0:
-            if ballPresent == True :
-                ballPresent = False
-                ballCounter = ballCounter + 1
-                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
-        else:
-            ballPresent = True
-
-       
-    # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-    writeImageSeries(30, 3, img_rgb)
-    if frameNo%2 == 0:
-        findPins()
+        frame2= getCroppedImage(frame2, ballCrops)
     
-    # key = cv2.waitKey(1000) & 0xFF
-    # # if the `q` key was pressed, break from the loop
-    # if key == ord("q"):
-    #     break
+        # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+        diff = cv2.absdiff(mask_gray,img_gray)
+        # First value reduces noise.  Values above 150 seem to miss certain ball colors
+        ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+        frame = thresh
+        # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
+        thresh = cv2.medianBlur(thresh,13)
+        # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
+        cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE)[-2]
+        center = None
+        radius = 0
+        if armPresent == False:
+            # print('Here', len(cnts))
+            if len(cnts) >= 0:
+                c = max(cnts, key=cv2.contourArea)
+                ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+                print(radius, center)
+            if radius > 20 and radius < 40:
+                lightsOFF(segment7s)
+                ballCounter = ballCounter + 1
+                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
+                time.sleep(0.5)
+
+            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+        
+        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
+        # writeImageSeries(30, 3, img_rgb)
+        if frameNo%2 == 0:
+            findPins()
+        
+        # key = cv2.waitKey(1000) & 0xFF
+        # # if the `q` key was pressed, break from the loop
+        # if key == ord("q"):
+        #     break
