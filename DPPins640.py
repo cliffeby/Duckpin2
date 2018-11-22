@@ -155,6 +155,8 @@ def isResetArm():
             print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
             armPresent = True
             ballCounter = 0
+            bit_GPIO(pinsGPIO,1023)
+            print('Reset')
     return
 
 def findPins():
@@ -191,7 +193,7 @@ def findPins():
                     return
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
-                    print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
+                    # print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
                     # if priorPinCount == 1023:
                     #     write_video(stream, result)
                     priorPinCount = pinCount
@@ -279,7 +281,16 @@ def drawPinRectangles():
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
 
+
+def lightsOFF(pins):
+    for pin in pins:
+        GPIO.output(pin, GPIO.HIGH)
+
 setupGPIO(pinsGPIO)
+setupGPIO(segment7s)
+# setupGPIO(sensor)
+lightsOFF(segment7s)
+GPIO.output((segment7All[0]), GPIO.LOW)
 getMaskFrame()
 bitBuckets =  collections.deque(9*[1], 9)
 pinCounts =[bitBuckets for x in range(10)]
@@ -356,7 +367,7 @@ with picamera.PiCamera() as camera:
         ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
         frame = thresh
         # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-        thresh = cv2.medianBlur(thresh,13)
+        thresh = cv2.medianBlur(thresh,31)
         # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -367,13 +378,14 @@ with picamera.PiCamera() as camera:
             if len(cnts) >= 0:
                 c = max(cnts, key=cv2.contourArea)
                 ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-                print(radius, center)
+                print('Rad and ceter',radius, center)
             if radius > 20 and radius < 40:
                 lightsOFF(segment7s)
                 ballCounter = ballCounter + 1
                 GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
-                time.sleep(0.5)
+                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo, radius )
+                time.sleep(4.0)
+                print('Awake', frameNo)
 
             GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
         
@@ -381,8 +393,8 @@ with picamera.PiCamera() as camera:
         # writeImageSeries(30, 3, img_rgb)
         if frameNo%2 == 0:
             findPins()
-        
-        # key = cv2.waitKey(1000) & 0xFF
+        # cv2.imshow('Ba;;',img_gray)
+        # key = cv2.waitKey(0) & 0xFF
         # # if the `q` key was pressed, break from the loop
         # if key == ord("q"):
         #     break
