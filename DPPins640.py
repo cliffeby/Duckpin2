@@ -296,7 +296,7 @@ bitBuckets =  collections.deque(9*[1], 9)
 pinCounts =[bitBuckets for x in range(10)]
 setterPresent = False
 armPresent = False
-ballPresent = False
+ballPresentFrameNo = 0
 priorPinCount = 0
 pinsFalling = False
 timesup = True
@@ -374,20 +374,20 @@ with picamera.PiCamera() as camera:
         center = None
         radius = 0
         if armPresent == False:
-            # print('Here', len(cnts))
-            if len(cnts) >= 0:
-                c = max(cnts, key=cv2.contourArea)
-                ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-                print('Rad and ceter',radius, center)
-            if radius > 20 and radius < 40:
-                lightsOFF(segment7s)
-                ballCounter = ballCounter + 1
-                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo, radius )
-                time.sleep(4.0)
-                print('Awake', frameNo)
+            if frameNo - ballPresentFrameNo >20:
+                # print('Here', len(cnts))
+                if len(cnts) >= 0:
+                    c = max(cnts, key=cv2.contourArea)
+                    ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+                    print('Rad and ceter',radius, center)
+                if radius > 20 and radius < 40:
+                    lightsOFF(segment7s)
+                    ballCounter = ballCounter + 1
+                    GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo, radius )
+                    ballPresentFrameNo = frameNo
 
-            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
         
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         # writeImageSeries(30, 3, img_rgb)
