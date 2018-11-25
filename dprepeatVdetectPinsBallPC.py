@@ -131,8 +131,8 @@ def findPins():
                 #     cv2.imwrite('../videos/pin'+ str(frameNo) +str(i+1)+'.jpg',crop[i])
                 if threshold <= sumHist[i]:
                     pinCount = pinCount + myModeFilter(i)
-        if frameNo%20 == 0:        
-            print('HIST', frameNo, pinCount)
+        # if frameNo%20 == 0:        
+        #     print('HIST', frameNo, pinCount)
         # bit_GPIO(pinsGPIO,pinCount)
 
         if priorPinCount == pinCount:
@@ -261,11 +261,14 @@ while(cap.isOpened()):
     # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
     img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(mask_gray,img_gray)
-    # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    # First value sets gray value that is recognized.  Low values show noise.
+    # Values above 150 seem to miss certain ball colors
+    ret, thresh = cv2.threshold(diff, 80,255,cv2.THRESH_BINARY)
+    if cv2.countNonZero(thresh)>400:
+        print("Non Zero.............", frameNo, cv2.countNonZero(thresh))
     frame = thresh
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    thresh = cv2.medianBlur(thresh,13)
+    # thresh = cv2.medianBlur(thresh,13)
     # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
         cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -282,7 +285,7 @@ while(cap.isOpened()):
         if len(cnts) > 0:
             c = max(cnts, key=cv2.contourArea)
             ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-            print(radius, xContour, yContour)
+            # print(radius, xContour, yContour)
             if radius > 15 and radius < 40:
                 if ballPresent == True :
                     ballPresent = False
@@ -290,6 +293,7 @@ while(cap.isOpened()):
                 else:
                     ballPresent = True
                     ballCounter = ballCounter + 1
+
                     print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
 
     cv2.imshow('All', img_rgb)
@@ -301,7 +305,7 @@ while(cap.isOpened()):
     frame1 = frame2
 
     # cv2.imshow('IMG_RGB with Ball Rect', img_rgb)
-    writeImageSeries(100,1,img_rgb)
+    # writeImageSeries(100,1,img_rgb)
     
     key = cv2.waitKey(1) & 0xFF
     
