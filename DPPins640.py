@@ -138,7 +138,9 @@ def isResetArm():
     # print(type(img_gray1arm), type(img_gray2arm))
     diff = cv2.absdiff(img_gray1arm,img_gray2arm)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    ret, threshArm = cv2.threshold(diff, 150,255,cv2.THRESH_BINARY)
+    if cv2.countNonZero(threshArm)>300:
+        print("Non Zero Setter............", frameNo, cv2.countNonZero(threshArm))
     # frame = threshArm
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
     threshArm = cv2.medianBlur(threshArm,15)
@@ -156,7 +158,6 @@ def isResetArm():
             armPresent = True
             ballCounter = 0
             bit_GPIO(pinsGPIO,1023)
-            print('Reset')
     return
 
 def findPins():
@@ -168,11 +169,12 @@ def findPins():
         def timeout():
             global timesup
             timesup = True
-            print ('Timer is finished', timesup)
+            print ('Timer is finished')
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
         lower_red = numpy.array([0,180,80])
+        # upper_red = numpy.array([10,255,255])  
         upper_red = numpy.array([10,220,190])       
         img_hsv = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(img_hsv,lower_red,upper_red)
@@ -204,10 +206,11 @@ def findPins():
             return
         else:
             pinsFalling = True
-            t = threading.Timer(2.0, timeout)
-            timesup = False
-            t.start() # after 2.0 seconds, stream will be saved
-            # print ('timer is running', priorPinCount, pinCount)
+            # t = threading.Timer(3.0, timeout)
+            # timesup = False
+            # t.start() # after 2.0 seconds, stream will be saved
+            # # print ('timer is running', priorPinCount, pinCount)
+            time.sleep(2)
             return
 
 def myModeFilter(index):
@@ -292,7 +295,7 @@ setupGPIO(segment7s)
 lightsOFF(segment7s)
 GPIO.output((segment7All[0]), GPIO.LOW)
 getMaskFrame()
-bitBuckets =  collections.deque(9*[1], 9)
+bitBuckets =  collections.deque(13*[1], 13)
 pinCounts =[bitBuckets for x in range(10)]
 setterPresent = False
 armPresent = False
@@ -366,25 +369,29 @@ with picamera.PiCamera() as camera:
         # First value reduces noise.  Values above 150 seem to miss certain ball colors
         ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
         frame = thresh
+        
         # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
         thresh = cv2.medianBlur(thresh,31)
+        nzb = cv2.countNonZero(thresh)
+        if nzb>900:
+            print("Non Zero Ball.............", frameNo, nzb)
         # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
         cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)[-2]
         center = None
         radius = 0
         if armPresent == False:
-            if frameNo - ballPresentFrameNo >20:
+            if frameNo - ballPresentFrameNo >40 and nzb>800:
                 # print('Here', len(cnts))
                 if len(cnts) >= 0:
                     c = max(cnts, key=cv2.contourArea)
                     ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-                    print('Rad and ceter',radius, center)
+                    # print('Rad and center',radius, center)
                 if radius > 20 and radius < 40:
                     lightsOFF(segment7s)
                     ballCounter = ballCounter + 1
                     GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo, radius )
+                    print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo, radius, xContour )
                     ballPresentFrameNo = frameNo
 
                 GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
