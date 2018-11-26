@@ -64,7 +64,7 @@ def findBeg(file):
 
 def formatxy(pinData):
     # Put ball xy data in json format
-    xy = {} #empty dictionary
+    xy = {} # create empty dictionary
     counter = 0
     while counter < len(pinData) and counter < 6:  # counter > 5 - to elinimate lingering ball or downed pin noise
             extra = {'x' + str(counter) : str(pinData[counter][0]) , 'y' +str(counter): str(pinData[counter][1])}
@@ -92,7 +92,7 @@ def insertRows(file, xy):
     except Exception as err:
         print('Error creating table, ' + table_name + 'check if it already exists')
     rowkey = str(getRowKey())
-    pinevent ={'PartitionKey':'Lane 4','RowKey': rowkey, 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
+    pinevent ={'PartitionKey':'Lane 4','RowKey': rowkey,'res':'1440', 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
     if len(xy) < 2:  #In a dictionary the key and value are counted ar one entry
         print('Entry only contains one xy pair and has been removed ', rowkey)
         return
@@ -154,8 +154,7 @@ while(cap.isOpened()):
             fileCounter = fileCounter+1
             oldxyData = None
             cap = cv2.VideoCapture(a[fileCounter])
-            ret, frame2 = cap.read()
-            
+            ret, frame2 = cap.read() 
             pinData = []
             img_gray_show = copy.deepcopy(img_gray1)
         else:
@@ -166,7 +165,7 @@ while(cap.isOpened()):
             else:
                 print('No ball data in Video ', fileCounter)
             print('No more data to process')
-            cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline.jpg',img_gray_show_line )
+            cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg',img_gray_show_line )
             print('Saving line image ')
             cleanup()
             break
