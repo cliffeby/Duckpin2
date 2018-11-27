@@ -163,7 +163,7 @@ while(cap.isOpened()):
             if len(xy)>0:
                 insertRows(a[fileCounter], xy)
             else:
-                print('No ball data in Video ', fileCounter)
+                print('No ball data in final Video ', fileCounter)
             print('No more data to process')
             cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg',img_gray_show_line )
             print('Saving line image ')
