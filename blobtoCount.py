@@ -170,6 +170,8 @@ while(cap.isOpened()):
             cleanup()
             break
     img_rgb = frame2
+    if frame2 is None:
+        continue
     frame2= getCroppedImage(frame2,ball_crops)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1,img_gray2)
