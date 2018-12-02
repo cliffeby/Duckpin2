@@ -16,6 +16,7 @@ account_name = credentials.STORAGE_ACCOUNT_NAME
 account_key = credentials.STORAGE_ACCOUNT_KEY
 account = CloudStorageAccount(account_name, account_key)
 ball_crops = cropdata1440.ballCrops
+ball_crops = [460,885,10,1200]
 
 def basic_blockblob_operations(account):
 
@@ -193,10 +194,10 @@ while(cap.isOpened()):
             # draw the circle on the frame,
             # then update the list of tracked points
             M = cv2.moments(c)
-            center =  center = (int(my_division(M["m10"],M["m00"])), int(my_division( M["m01"], M["m00"])))
+            center = (int(my_division(M["m10"],M["m00"])), int(my_division( M["m01"], M["m00"])))
             xyData = (center[0], center[1])
             pinData.append(xyData)
-            cv2.drawContours(img_gray_show, cnts, -1, (0,255,0), 3)
+            cv2.drawContours(img_gray_show, c, -1, (0,255,0), 3)
             if oldxyData != None:
                 cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0,255,0),1)
                 cv2.circle(img_gray_show_line, xyData,3, (0,255,0),-1)
