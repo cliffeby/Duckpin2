@@ -316,6 +316,30 @@ def trip():
             print('Ball Timer Awake ', ballCounter)
             timesup = True
 
+def tripSet():
+    global sensor, ballCounter, segment7s, segment7All
+    GPIO.setup(sensor[0], GPIO.OUT)
+    GPIO.output(sensor[0], GPIO.LOW)
+    time.sleep(.5)
+    GPIO.setup(sensor[0], GPIO.IN)
+ 
+
+def tripSense():
+        global sensor, ballCounter, segment7s, segment7All, done
+        if (GPIO.input(sensor[0]) == GPIO.LOW):
+            print('no ball')
+            done = True
+        else:
+            print ('ba;;')
+            if done == True:
+                print('BALLLLLLL ', ballCounter)
+                lightsOFF(segment7s)
+                ballCounter = ballCounter +1
+                time.sleep(.1)
+                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print('Ball Timer Awake ', ballCounter)
+            done = False  
+
 def lightsOFF(pins):
     for pin in pins:
         GPIO.output(pin, GPIO.HIGH)
@@ -341,8 +365,10 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
-tt = threading.Thread(target= trip, name = 'tripThread')
-tt.start()
+# tt = threading.Thread(target= trip, name = 'tripThread')
+# tt.start()
+tripSet()
+done = False
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
@@ -372,6 +398,8 @@ with picamera.PiCamera() as camera:
         img_rgb = frame2
         frame2arm = getCroppedImage(frame2, resetArmCrops)
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+
+        tripSense()
 
         isPinSetter()   #Deadwood
         if setterPresent:
