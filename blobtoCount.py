@@ -31,7 +31,7 @@ def basic_blockblob_operations(account):
     generator = blockblob_service.list_blobs(dpContainer)
     if sum(1 for _ in generator) == 0:
         print('No blobs to process -- program ending')
-        # exit(0)
+        exit(0)
     for blob in generator:
         print('\tBlob Name: ' + blob.name, blob.properties)
         file = blob.name
@@ -99,7 +99,7 @@ def insertRows(file, xy):
         return
     pinevent.update(xy)
     # Insert the entity into the table
-    # table_service.insert_entity(table_name, pinevent)        
+    table_service.insert_entity(table_name, pinevent)        
     print('Successfully inserted the new entity into table - ' + file, table_name, pinevent)
 
 def dist(old,new, thresh):
