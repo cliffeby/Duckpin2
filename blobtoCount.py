@@ -8,7 +8,7 @@ from azure.storage.blob import BlockBlobService, PageBlobService, AppendBlobServ
 import cropdata1440  #defines ball crops - area before ball hits pins
 import time
 import cv2
-import numpy
+import numpy, math
 import glob
 import os, sys
 
@@ -31,7 +31,7 @@ def basic_blockblob_operations(account):
     generator = blockblob_service.list_blobs(dpContainer)
     if sum(1 for _ in generator) == 0:
         print('No blobs to process -- program ending')
-        exit(0)
+        # exit(0)
     for blob in generator:
         print('\tBlob Name: ' + blob.name, blob.properties)
         file = blob.name
@@ -99,10 +99,19 @@ def insertRows(file, xy):
         return
     pinevent.update(xy)
     # Insert the entity into the table
-    table_service.insert_entity(table_name, pinevent)        
+    # table_service.insert_entity(table_name, pinevent)        
     print('Successfully inserted the new entity into table - ' + file, table_name, pinevent)
 
-
+def dist(old,new, thresh):
+    # Checks for very slow ball movement or arm looking like a ball
+    # Is ball moving greater than trhesh in pixels
+    l2 = (old[0] - new[0])**2 + (old[1] -new[1])**2
+    if math.sqrt(l2)< thresh:
+        return True
+    # Is ball moving backward - y axis
+    if old[1] - new[1]<0:
+        return True
+    return False
 
 def getCroppedImage(image,crop_array):
     croppedImage = image[crop_array[0]:crop_array[1],crop_array[2]:crop_array[3]]
@@ -199,9 +208,15 @@ while(cap.isOpened()):
             pinData.append(xyData)
             cv2.drawContours(img_gray_show, c, -1, (0,255,0), 3)
             if oldxyData != None:
-                cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0,255,0),1)
-                cv2.circle(img_gray_show_line, xyData,3, (0,255,0),-1)
-                cv2.circle(img_gray_show_line, oldxyData,3, (0,255,0),-1)
+                if dist(oldxyData,xyData,30):
+                    pinData.pop()
+                    xyData = oldxyData
+                    print ('Ball not moving - dist and location', xyData )
+                else:
+                    cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0,255,0),1)
+                    cv2.circle(img_gray_show_line, xyData,3, (0,255,0),-1)
+                    cv2.circle(img_gray_show_line, oldxyData,3, (0,255,0),-1)
+                
             oldxyData = xyData
 
     cv2.imshow('Ball locations' , img_gray_show)
