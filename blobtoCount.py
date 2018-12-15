@@ -94,8 +94,10 @@ def insertRows(file, xy):
         print('Error creating table, ' + table_name + 'check if it already exists')
     rowkey = str(getRowKey())
     pinevent ={'PartitionKey':'Lane 4','RowKey': rowkey,'res':'1440', 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
-    if len(xy) < 2:  #In a dictionary the key and value are counted ar one entry
+    if len(xy) < 2:  #In a dictionary the key and value are counted as one entry
         print('Entry only contains one xy pair and has been removed ', rowkey)
+        return
+    if findBeg(file)[1] == 1023:  # Eliminate gutter or event with no pin action
         return
     pinevent.update(xy)
     # Insert the entity into the table
