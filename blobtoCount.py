@@ -177,7 +177,7 @@ while(cap.isOpened()):
             print('No more data to process')
             cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg',img_gray_show_line )
             print('Saving line image ')
-            cleanup()
+            # cleanup()
             break
     img_rgb = frame2
     if frame2 is None:
