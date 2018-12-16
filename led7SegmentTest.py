@@ -133,7 +133,7 @@ def sensor():
 
 setupGPIO(leds)
 lightsOFF(ledAll)
-lightTESTa(ledAll,1,0)
+lightTESTa(ledAll,3,0)
 # lightTESTa(leds1[::-1], 0.5,0)
 lightsOFF(leds)
 # listTEST(ledAll)
