@@ -179,7 +179,7 @@ while(cap.isOpened()):
             print('No more data to process')
             cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg',img_gray_show_line )
             print('Saving line image ')
-            # cleanup()
+            cleanup()  # Delete files from local storage
             break
     img_rgb = frame2
     if frame2 is None:
@@ -210,7 +210,7 @@ while(cap.isOpened()):
             pinData.append(xyData)
             cv2.drawContours(img_gray_show, c, -1, (0,255,0), 3)
             if oldxyData != None:
-                if dist(oldxyData,xyData,30):
+                if dist(oldxyData,xyData,15):
                     pinData.pop()
                     xyData = oldxyData
                     print ('Ball not moving - dist and location', xyData )
