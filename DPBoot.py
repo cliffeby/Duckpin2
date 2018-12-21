@@ -14,7 +14,7 @@ from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
-pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
+pinsGPIO = [15,14,3,27,21,20,16,5,26,6]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [36,350,1220,1350]

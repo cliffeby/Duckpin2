@@ -19,6 +19,7 @@ pinsGPIO = myGPIO.pinsGPIO  # [15,14,3,2,21,20,16,5,26,6]
 segment7s = myGPIO.segment7s
 segment7All = myGPIO.segment7All
 sensor = myGPIO.sensor
+sensor=[12]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [86,300,1020,1250]
@@ -399,8 +400,16 @@ with picamera.PiCamera() as camera:
         frame2arm = getCroppedImage(frame2, resetArmCrops)
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
-        tripSense()
-
+        # tripSense()
+        while (GPIO.input(sensor[0]) == GPIO.HIGH):
+                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print('Ball Timer Awake ', ballCounter)
+                done = True
+        if done ==True:
+            done = False
+            ballCounter = ballCounter +1
+            lightsOFF(segment7s)
+            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
         isPinSetter()   #Deadwood
         if setterPresent:
             print('SetterPresent', frameNo, ballCounter)
