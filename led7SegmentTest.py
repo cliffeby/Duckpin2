@@ -20,17 +20,18 @@ from gpiozero import LightSensor
 # led9 = [18, 24, 8, 23, 9]
 # ledAll = [led0, led1, led2, led3, led4, led5, led6, led7, led8, led9]
 
-leds = [18, 24, 25, 7, 8, 23, 9, 4]
-led0 = [18, 24, 25, 7, 8, 23]
-led1 = [18, 24]
-led2 = [18, 25, 7, 23, 9]
-led3 = [18, 24, 25, 7, 9]
-led4 = [18, 24, 8, 9]
-led5 = [24, 25, 8, 7, 9]
-led6 = [24, 25, 23, 8, 9]
-led7 = [18, 24, 7]
-led8 = [18, 24, 25, 7, 8, 23, 9]
-led9 = [18, 24, 8, 7, 9]
+
+leds = [8,24,23,15,7,25,14]
+led0 = [8,24,23,15,7,25]
+led1 = [8,24]
+led2 = [8,23,15,25,14]
+led3 = [8,24,23,25,14]
+led4 = [8,24,7,14]
+led5 = [24,23,7,25,14]
+led6 = [24,23,15,7,14]
+led7 = [8,24,25]
+led8 = [8,24,23,15,7,25,14]
+led9 = [8,24,23,7,25,14]
 ledAll = [led0, led1, led2, led3, led4, led5, led6, led7, led8, led9]
 
 
@@ -133,8 +134,8 @@ def sensor():
 
 setupGPIO(leds)
 lightsOFF(ledAll)
-lightTESTa(ledAll,3,0)
-# lightTESTa(leds1[::-1], 0.5,0)
+lightTESTa(ledAll,.1,0)
+# lightTESTa(leds[::1], 10.5,0)
 lightsOFF(leds)
 # listTEST(ledAll)
 # trip()
