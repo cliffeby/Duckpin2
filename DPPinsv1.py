@@ -19,7 +19,7 @@ pinsGPIO = myGPIO.pinsGPIO  # [15,14,3,2,21,20,16,5,26,6]
 segment7s = myGPIO.segment7s
 segment7All = myGPIO.segment7All
 sensor = myGPIO.sensor
-sensor=[12]
+sensor=[26,20,21]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [86,300,1020,1250]
@@ -319,10 +319,11 @@ def trip():
 
 def tripSet():
     global sensor, ballCounter, segment7s, segment7All
-    GPIO.setup(sensor[0], GPIO.OUT)
-    GPIO.output(sensor[0], GPIO.LOW)
-    time.sleep(.5)
-    GPIO.setup(sensor[0], GPIO.IN)
+    for s in sensor:
+        GPIO.setup(s, GPIO.OUT)
+        GPIO.output(s, GPIO.LOW)
+        time.sleep(.5)
+        GPIO.setup(s, GPIO.IN)
  
 
 def tripSense():
@@ -401,35 +402,46 @@ with picamera.PiCamera() as camera:
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
         # tripSense()
+        # print("GPIO", GPIO.input(sensor[0]))
+        print('Sensore', GPIO.input(sensor[1]), GPIO.input(sensor[2]))
         while (GPIO.input(sensor[0]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Ball Timer Awake ', ballCounter)
+                # print('Ball Timer Awake ', ballCounter)
                 done = True
         if done ==True:
             done = False
             ballCounter = ballCounter +1
             lightsOFF(segment7s)
             GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-        isPinSetter()   #Deadwood
-        if setterPresent:
-            print('SetterPresent', frameNo, ballCounter)
-            bit_GPIO(pinsGPIO,priorPinCount)
-            time.sleep(10)
-            setterPresent = False
-            ballPresent = False
-            continue
+
+        while (GPIO.input(sensor[1]) == GPIO.HIGH):
+                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print('Deadwood ', ballCounter)
+                done = True
+        while (GPIO.input(sensor[2]) == GPIO.HIGH):
+                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print('Reset ', ballCounter)
+                done = True
+        # isPinSetter()   #Deadwood
+        # if setterPresent:
+        #     print('SetterPresent', frameNo, ballCounter)
+        #     bit_GPIO(pinsGPIO,priorPinCount)
+        #     time.sleep(10)
+        #     setterPresent = False
+        #     ballPresent = False
+        #     continue
         
-        isResetArm()    #Reset
-        if armPresent:
-            print ('ArmPresent', frameNo, ballCounter)
-            bit_GPIO(pinsGPIO,1023)
-            write_video2(stream)
-            writeImageSeries(frameNo,1,img_gray2arm)
-            time.sleep(10)
-            armPresent = False
-            ballPresent = False
-            ballCounter = 0
-            continue
+        # isResetArm()    #Reset
+        # if armPresent:
+        #     print ('ArmPresent', frameNo, ballCounter)
+        #     bit_GPIO(pinsGPIO,1023)
+        #     write_video2(stream)
+        #     writeImageSeries(frameNo,1,img_gray2arm)
+        #     time.sleep(10)
+        #     armPresent = False
+        #     ballPresent = False
+        #     ballCounter = 0
+        #     continue
 
         # frame2= getCroppedImage(frame2, ballCrops)
         # # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
@@ -454,7 +466,7 @@ with picamera.PiCamera() as camera:
         #     ballPresent = True
        
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        writeImageSeries(30, 3, img_rgb)
+        # writeImageSeries(30, 3, img_rgb)
         if frameNo%2 == 0:
             findPins()
         

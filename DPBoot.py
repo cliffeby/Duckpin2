@@ -14,7 +14,7 @@ from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
-pinsGPIO = [15,14,3,27,21,20,16,5,26,6]
+pinsGPIO = [5, 11, 9, 10, 22, 27, 17, 4, 3, 2]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [36,350,1220,1350]
@@ -269,9 +269,9 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=5
+x=25
 x1=0 +x
-y=-26
+y=-6
 y1=0 + y
 frameNo = 0
 ballCounter = 0
