@@ -15,4 +15,4 @@ segment7All = [segment7_0, segment7_1, segment7_2, segment7_3,
 # Pin leds
 pinsGPIO = [5, 11, 9, 10, 22, 27, 17, 4, 3, 2]
 #  Laser trip-wire GPIO
-sensor = [12]
+sensor = [12,21,20]

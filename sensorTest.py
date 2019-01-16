@@ -4,7 +4,7 @@
 import RPi.GPIO as GPIO
 import time
 
-sensor = [26, 20, 21]
+sensor = [26, 21, 20]
 ballCounter = 0
 
 
@@ -33,10 +33,10 @@ while True:
     print('Sensor', GPIO.input(sensor[0]), GPIO.input(
         sensor[1]), GPIO.input(sensor[2]))
 
-    while (GPIO.input(sensor[0]) == GPIO.HIGH):
-        ballCounter = ballCounter + 1
-        # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-        print('Ball Timer Awake ', ballCounter)
+    # while (GPIO.input(sensor[0]) == GPIO.HIGH):
+    #     ballCounter = ballCounter + 1
+    #     # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+    #     print('Ball ', ballCounter)
 
     while (GPIO.input(sensor[1]) == GPIO.HIGH):
             # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)

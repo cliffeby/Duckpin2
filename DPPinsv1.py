@@ -19,7 +19,7 @@ pinsGPIO = myGPIO.pinsGPIO  # [15,14,3,2,21,20,16,5,26,6]
 segment7s = myGPIO.segment7s
 segment7All = myGPIO.segment7All
 sensor = myGPIO.sensor
-sensor=[26,20,21]
+sensor=[12,21,20]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [86,300,1020,1250]
@@ -421,6 +421,7 @@ with picamera.PiCamera() as camera:
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Reset ', ballCounter)
+                ballCounter = 0
                 done = True
         # isPinSetter()   #Deadwood
         # if setterPresent:
