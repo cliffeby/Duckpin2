@@ -19,7 +19,7 @@ pinsGPIO = myGPIO.pinsGPIO  # [15,14,3,2,21,20,16,5,26,6]
 segment7s = myGPIO.segment7s
 segment7All = myGPIO.segment7All
 sensor = myGPIO.sensor
-sensor=[12,21,20]
+sensor=[26,21,20]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [86,300,1020,1250]
@@ -41,7 +41,18 @@ def setupGPIO(pins):
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)
+        
     print ("setup Completed")
+
+def tripSet():
+    global sensor
+    for s in sensor:
+        GPIO.setup(s, GPIO.OUT)
+        GPIO.output(s, GPIO.LOW)
+        time.sleep(.5)
+        GPIO.setup(s, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+ 
+
 
 def bit_GPIO(pins,pinCount):
     bits = "{0:b}".format(pinCount)
@@ -113,71 +124,71 @@ def write_video2(stream):
     stream.truncate()
 
 
-def isPinSetter():
-    global setterPresent
-    global frameNo
-    global img_rgb
-    global firstSetterFrame
-    global activity
+# def isPinSetter():
+#     global setterPresent
+#     global frameNo
+#     global img_rgb
+#     global firstSetterFrame
+#     global activity
     
-    # Convert BGR to HSV
-    frame =  getCroppedImage(img_rgb, pinSetterCrops)
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    # define range of green color in HSV
-    lower_green = numpy.array([65,60,60])
-    upper_green = numpy.array([80,255,255])
-    # Threshold the HSV image to get only green colors
-    mask = cv2.inRange(hsv, lower_green, upper_green)
-    res = cv2.bitwise_and(frame,frame, mask=mask)
-    _,thrshed = cv2.threshold(cv2.cvtColor(res,cv2.COLOR_BGR2GRAY),3,255,cv2.THRESH_BINARY)
-    _,contours,_ = cv2.findContours(thrshed,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-    setterPresent = False
-    area = 0
-    for cnt in contours:
-        #Contour area is measured
-        area = cv2.contourArea(cnt) +area
-    if area >1000:
-        setterPresent = True
-    if setterPresent:
-        activity = activity + str(priorPinCount)+ ',-2,'
-        print("Green", area, frameNo, activity)
-    return
+#     # Convert BGR to HSV
+#     frame =  getCroppedImage(img_rgb, pinSetterCrops)
+#     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+#     # define range of green color in HSV
+#     lower_green = numpy.array([65,60,60])
+#     upper_green = numpy.array([80,255,255])
+#     # Threshold the HSV image to get only green colors
+#     mask = cv2.inRange(hsv, lower_green, upper_green)
+#     res = cv2.bitwise_and(frame,frame, mask=mask)
+#     _,thrshed = cv2.threshold(cv2.cvtColor(res,cv2.COLOR_BGR2GRAY),3,255,cv2.THRESH_BINARY)
+#     _,contours,_ = cv2.findContours(thrshed,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+#     setterPresent = False
+#     area = 0
+#     for cnt in contours:
+#         #Contour area is measured
+#         area = cv2.contourArea(cnt) +area
+#     if area >1000:
+#         setterPresent = True
+#     if setterPresent:
+#         activity = activity + str(priorPinCount)+ ',-2,'
+#         print("Green", area, frameNo, activity)
+#     return
 
-def isResetArm():
-    global firstArmFrame, armPresent, ballCounter
-    global frameNo
-    global img_rgb
-    global img_gray1arm
-    global threshArm
-    global resetArmCrops
-    global priorPinCount
+# def isResetArm():
+#     global firstArmFrame, armPresent, ballCounter
+#     global frameNo
+#     global img_rgb
+#     global img_gray1arm
+#     global threshArm
+#     global resetArmCrops
+#     global priorPinCount
     
-    frame2arm = getCroppedImage(img_rgb, resetArmCrops)
-    img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
-    # print('IMG GRAY ARM', img_gray1arm, img_gray2arm, frame2arm, type(frame2arm))
-    # print(type(img_gray1arm), type(img_gray2arm))
-    diff = cv2.absdiff(img_gray1arm,img_gray2arm)
-    # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
-    # frame = threshArm
-    # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    threshArm = cv2.medianBlur(threshArm,25)
-    cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
-		cv2.CHAIN_APPROX_SIMPLE)[-2]
+#     frame2arm = getCroppedImage(img_rgb, resetArmCrops)
+#     img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+#     # print('IMG GRAY ARM', img_gray1arm, img_gray2arm, frame2arm, type(frame2arm))
+#     # print(type(img_gray1arm), type(img_gray2arm))
+#     diff = cv2.absdiff(img_gray1arm,img_gray2arm)
+#     # First value reduces noise.  Values above 150 seem to miss certain ball colors
+#     ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+#     # frame = threshArm
+#     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
+#     threshArm = cv2.medianBlur(threshArm,25)
+#     cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
+# 		cv2.CHAIN_APPROX_SIMPLE)[-2]
 
-    if len(cnts) > 0:
-		# find the largest contour in the mask, then use
-		# it to compute the minimum enclosing circle and centroid
-        # c = max(cnts, key=cv2.contourArea)
-        # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        # if radius > 15:
-        print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
+#     if len(cnts) > 0:
+# 		# find the largest contour in the mask, then use
+# 		# it to compute the minimum enclosing circle and centroid
+#         # c = max(cnts, key=cv2.contourArea)
+#         # ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+#         # if radius > 15:
+#         print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
        
-        armPresent = True
-        ballCounter = 0
-        lightsOFF(segment7s)
-        GPIO.output((segment7All[0]), GPIO.LOW)
-    return
+#         armPresent = True
+#         ballCounter = 0
+#         lightsOFF(segment7s)
+#         GPIO.output((segment7All[0]), GPIO.LOW)
+#     return
 
 def findPins():
         global x,x1,y,y1
@@ -288,60 +299,6 @@ def timeout():
     timesup = True
     print('Timer is finished', timesup)
 
-def trip():
-    global sensor, ballCounter, segment7s, segment7All
-    GPIO.setup(sensor[0], GPIO.OUT)
-    GPIO.output(sensor[0], GPIO.LOW)
-    time.sleep(.5)
-    GPIO.setup(sensor[0], GPIO.IN)
-    light = 0
-    timesup = True
-    while True:
-        if (GPIO.input(sensor[0]) == GPIO.LOW):
-            if (light == 0):
-                # print('light = 0 and input low')
-                continue
-            print('no ball')
-            light = 0
-        else:
-            if timesup == False:
-                # print('light = 1 and input high')
-                continue
-            print('BALLLLLLL ', ballCounter)
-            lightsOFF(segment7s)
-            
-            light = 1
-            ballCounter = ballCounter +1
-            time.sleep(.5)
-            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-            print('Ball Timer Awake ', ballCounter)
-            timesup = True
-
-def tripSet():
-    global sensor, ballCounter, segment7s, segment7All
-    for s in sensor:
-        GPIO.setup(s, GPIO.OUT)
-        GPIO.output(s, GPIO.LOW)
-        time.sleep(.5)
-        GPIO.setup(s, GPIO.IN)
- 
-
-def tripSense():
-        global sensor, ballCounter, segment7s, segment7All, done
-        if (GPIO.input(sensor[0]) == GPIO.LOW):
-            print('no ball')
-            done = True
-        else:
-            print ('ba;;')
-            if done == True:
-                print('BALLLLLLL ', ballCounter)
-                lightsOFF(segment7s)
-                ballCounter = ballCounter +1
-                time.sleep(.1)
-                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Ball Timer Awake ', ballCounter)
-            done = False  
-
 def lightsOFF(pins):
     for pin in pins:
         GPIO.output(pin, GPIO.HIGH)
@@ -403,17 +360,23 @@ with picamera.PiCamera() as camera:
 
         # tripSense()
         # print("GPIO", GPIO.input(sensor[0]))
-        print('Sensore', GPIO.input(sensor[1]), GPIO.input(sensor[2]))
+        # print('Sensore', GPIO.input(sensor[1]), GPIO.input(sensor[2]))
         while (GPIO.input(sensor[0]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 # print('Ball Timer Awake ', ballCounter)
-                done = True
-        if done ==True:
             done = False
+            try:
+                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
+                print('Falling edge')
+                done = True
+            except KeyboardInterrupt:
+                GPIO.cleanup()
+        
+        if done ==True:
             ballCounter = ballCounter +1
             lightsOFF(segment7s)
             GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-
+            print('Ball Timer Awake ', ballCounter)
         while (GPIO.input(sensor[1]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Deadwood ', ballCounter)
@@ -422,52 +385,10 @@ with picamera.PiCamera() as camera:
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Reset ', ballCounter)
                 ballCounter = 0
+                lightsOFF(segment7s)
+                GPIO.output((segment7All[0]), GPIO.LOW)
                 done = True
-        # isPinSetter()   #Deadwood
-        # if setterPresent:
-        #     print('SetterPresent', frameNo, ballCounter)
-        #     bit_GPIO(pinsGPIO,priorPinCount)
-        #     time.sleep(10)
-        #     setterPresent = False
-        #     ballPresent = False
-        #     continue
-        
-        # isResetArm()    #Reset
-        # if armPresent:
-        #     print ('ArmPresent', frameNo, ballCounter)
-        #     bit_GPIO(pinsGPIO,1023)
-        #     write_video2(stream)
-        #     writeImageSeries(frameNo,1,img_gray2arm)
-        #     time.sleep(10)
-        #     armPresent = False
-        #     ballPresent = False
-        #     ballCounter = 0
-        #     continue
 
-        # frame2= getCroppedImage(frame2, ballCrops)
-        # # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        # img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-        # diff = cv2.absdiff(mask_gray,img_gray)
-        # # First value reduces noise.  Values above 150 seem to miss certain ball colors
-        # ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
-        # frame = thresh
-        # # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-        # thresh = cv2.medianBlur(thresh,13)
-        # # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
-        # cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-        #     cv2.CHAIN_APPROX_SIMPLE)[-2]
-        # # center = None
-        # # radius = 0
-        # if len(cnts) == 0:
-        #     if ballPresent == True:
-        #         ballPresent = False
-        #         ballCounter = ballCounter + 1
-        #         print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
-        # else:
-        #     ballPresent = True
-       
-        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
-        # writeImageSeries(30, 3, img_rgb)
         if frameNo%2 == 0:
             findPins()
         
