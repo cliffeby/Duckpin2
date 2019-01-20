@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+import myGPIO
 from random import randint
 
 #Arrays of GPIO pins for the three orientations of prototype
@@ -10,11 +11,12 @@ leds1 = [ 6,26,20, 5,21,3,16,2,14,15]
 leds2 = [15,3,14,20,21,2,6,26,5,16]
 leds3 = [16,2,5,14,21,26,15,3,20,6]
 leds4 = [15,14,3,2,21,20,16,5,26,6]
-leds5 = [5, 11, 9, 10, 22, 27, 17, 4, 3, 2]
+leds5 = myGPIO.pinsGPIO#[5, 11, 9, 10, 22, 27, 17, 4, 3, 2]
+led7 = myGPIO.segment7s
 
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)
@@ -56,7 +58,7 @@ lightsOFF(leds5)
 lightTESTa(leds5,1,0)
 lightTESTa(leds5[::-1], 0.5,0)
 lightsOFF(leds5)
-GPIO.output(5,GPIO.LOW)
+
 # lightTESTa(leds3,1,0)
 # lightTESTa(leds3[::-1], 0.5,0)
 # bit_GPIO(leds1,'0000001000')

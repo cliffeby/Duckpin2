@@ -19,7 +19,6 @@ pinsGPIO = myGPIO.pinsGPIO  # [15,14,3,2,21,20,16,5,26,6]
 segment7s = myGPIO.segment7s
 segment7All = myGPIO.segment7All
 sensor = myGPIO.sensor
-sensor=[26,21,20]
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [86,300,1020,1250]
@@ -37,7 +36,7 @@ def getCroppedImage(image,crop_array):
     return croppedImage
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)

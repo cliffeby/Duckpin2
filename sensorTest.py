@@ -2,9 +2,10 @@
 
 
 import RPi.GPIO as GPIO
+import myGPIO
 import time
 
-sensor = [37, 40, 38]
+sensor = myGPIO.sensor
 # sensor = [26, 21, 20]
 ballCounter = 0
 

@@ -10,11 +10,12 @@ import picamera
 import io
 import threading
 import cropdata1440
+import myGPIO
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
-pinsGPIO = [5, 11, 9, 10, 22, 27, 17, 4, 3, 2]
+pinsGPIO = myGPIO.pinsGPIO
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [36,350,1220,1350]
@@ -32,7 +33,7 @@ def getCroppedImage(image,crop_array):
     return croppedImage
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)

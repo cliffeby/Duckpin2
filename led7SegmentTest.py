@@ -1,42 +1,25 @@
 import RPi.GPIO as GPIO
 import time
-import threading
+import myGPIO
 from random import randint
-from gpiozero import LightSensor
 
 
-# Arrays of GPIO pins for the three orientations of prototype
-
-# leds = [18, 24, 25, 7, 8, 23, 9, 4]
-# led0 = [18, 24, 25, 7, 8, 23]
-# led1 = [18, 24]
-# led2 = [18, 25, 7, 23, 9]
-# led3 = [18, 24, 25, 23, 9]
-# led4 = [18, 24, 8, 9]
-# led5 = [24, 25, 8, 23, 9]
-# led6 = [24, 25, 7, 8, 9]
-# led7 = [18, 24, 23]
-# led8 = [18, 24, 25, 7, 8, 23, 9]
-# led9 = [18, 24, 8, 23, 9]
-# ledAll = [led0, led1, led2, led3, led4, led5, led6, led7, led8, led9]
-
-
-leds = [8,24,23,15,7,25,14]
-led0 = [8,24,23,15,7,25]
-led1 = [8,24]
-led2 = [8,23,15,25,14]
-led3 = [8,24,23,25,14]
-led4 = [8,24,7,14]
-led5 = [24,23,7,25,14]
-led6 = [24,23,15,7,14]
-led7 = [8,24,25]
-led8 = [8,24,23,15,7,25,14]
-led9 = [8,24,23,7,25,14]
+leds = myGPIO.segment7s#[8,24,23,15,7,25,14]
+led0 = myGPIO.segment7_0#[8,24,23,15,7,25]
+led1 = myGPIO.segment7_1#[8,24]
+led2 = myGPIO.segment7_2#[8,23,15,25,14]
+led3 = myGPIO.segment7_3#[8,24,23,25,14]
+led4 = myGPIO.segment7_4#[8,24,7,14]
+led5 = myGPIO.segment7_5#[24,23,7,25,14]
+led6 = myGPIO.segment7_6#[24,23,15,7,14]
+led7 = myGPIO.segment7_7#[8,24,25]
+led8 = myGPIO.segment7_8#[8,24,23,15,7,25,14]
+led9 = myGPIO.segment7_9#[8,24,23,7,25,14]
 ledAll = [led0, led1, led2, led3, led4, led5, led6, led7, led8, led9]
 
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin, GPIO.OUT)
@@ -80,62 +63,13 @@ def timeout():
     timesup = True
     print('Timer is finished', timesup)
 
-
-def trip():
-    GPIO.setup(14, GPIO.OUT)
-    GPIO.output(14, GPIO.LOW)
-    time.sleep(.5)
-    GPIO.setup(14, GPIO.IN)
-    light = 0
-    count = 0
-    timesup = True
-    t = threading.Timer(3.0, timeout)
-    while True:
-
-        if (GPIO.input(14) == GPIO.LOW):
-            if (light == 0):
-                # print('light = 0 and input low')
-                continue
-            print('no ball')
-            light = 0
-        else:
-            if timesup == False:
-                print('light = 1 and input high')
-                continue
-
-            print('BALLLLLLL ', count)
-            lightsOFF(leds)
-            GPIO.output((ledAll[count % 10]), GPIO.LOW)
-            light = 1
-            count = count + 1
-            time.sleep(.5)
-            timesup = True
-
-
-def sensor():
-    ldr = LightSensor(4)
-    NOTLDR = LightSensor(14)
-    while True:
-        print(ldr.value, NOTLDR.value)
-
-# def bit_GPIO(pins, bits):
-#     while len(bits)<10:
-#         bits = "0"+bits
-#     for idx in range(0,len(bits)):
-#         print(idx,bits, bits[idx])
-#         if(bits[idx]=="1"):
-#              GPIO.output(pins[idx], GPIO.HIGH)
-#         else:
-#             GPIO.output(pins[idx], GPIO.LOW)
-
-
-# *-
-
+wait1 = 2
 
 setupGPIO(leds)
-lightsOFF(ledAll)
-lightTESTa(ledAll,.1,0)
-# lightTESTa(leds[::1], 10.5,0)
+lightsOFF(leds)
+
+lightTESTa(leds,1.1,0)
+lightTESTa(leds[::1], 10.5,0)
 lightsOFF(leds)
 # listTEST(ledAll)
 # trip()
