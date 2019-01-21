@@ -272,7 +272,7 @@ timesup = True
 activity = "\r\n"
 x=25
 x1=0 +x
-y=-6
+y=-20
 y1=0 + y
 frameNo = 0
 ballCounter = 0
@@ -319,15 +319,15 @@ with picamera.PiCamera() as camera:
             setterPresent = False
             continue
         
-        isResetArm()    #Reset
-        if armPresent:
-            print ('ArmPresent', frameNo, ballCounter)
-            bit_GPIO(pinsGPIO,1023)
-            time.sleep(10)
-            armPresent = False
-            ballCounter = 0
-            # writeImageSeries(2,3,frame2)
-            continue
+        # isResetArm()    #Reset
+        # if armPresent:
+        #     print ('ArmPresent', frameNo, ballCounter)
+        #     bit_GPIO(pinsGPIO,1023)
+        #     time.sleep(10)
+        #     armPresent = False
+        #     ballCounter = 0
+        #     # writeImageSeries(2,3,frame2)
+        #     continue
 
         # frame2= getCroppedImage(frame2, ballCrops)
         # # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)

@@ -10,11 +10,15 @@ import picamera
 import io
 import threading
 import cropdata1440
+import myGPIO
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
 
-pinsGPIO = [15,14,3,2,21,20,16,5,26,6]
+pinsGPIO = myGPIO.pinsGPIO
+sensor = myGPIO.sensor
+segment7s = myGPIO.segment7s
+segment7All = myGPIO.segment7All
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [36,350,1220,1350]
@@ -32,12 +36,24 @@ def getCroppedImage(image,crop_array):
     return croppedImage
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BCM)
+    GPIO.setmode(GPIO.BOARD)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)
     print ("setup Completed")
 
+def lightsOFF(pins):
+    for pin in pins:
+        GPIO.output(pin, GPIO.HIGH)
+        
+def tripSet():
+    global sensor
+    for s in sensor:
+        GPIO.setup(s, GPIO.OUT)
+        GPIO.output(s, GPIO.LOW)
+        time.sleep(.5)
+        GPIO.setup(s, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+ 
 def bit_GPIO(pins,pinCount):
     bits = "{0:b}".format(pinCount)
     while len(bits)<10:
@@ -261,6 +277,8 @@ def drawPinRectangles():
     cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
 
 setupGPIO(pinsGPIO)
+setupGPIO(segment7s)
+tripSet()
 getMaskFrame()
 setterPresent = False
 armPresent = False
@@ -269,14 +287,15 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=5
+x=28
 x1=0 +x
-y=-26
+y=-17
 y1=0 + y
 frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
+done = True
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
@@ -307,49 +326,38 @@ with picamera.PiCamera() as camera:
         frame2arm = getCroppedImage(frame2, resetArmCrops)
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
-        isPinSetter()   #Deadwood
-        if setterPresent:
-            print('SetterPresent', frameNo, ballCounter)
-            bit_GPIO(pinsGPIO,priorPinCount)
-            if priorPinCount==0:
-                bit_GPIO(pinsGPIO,1023)
-                ballCounter = 0
-            time.sleep(10)
-            setterPresent = False
-            continue
+        while (GPIO.input(sensor[0]) == GPIO.HIGH):
+                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                # print('Ball Timer Awake ', ballCounter)
+            done = False
+            try:
+                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
+                print('Falling edge')
+                done = True
+                
+            except KeyboardInterrupt:
+                GPIO.cleanup()
         
-        isResetArm()    #Reset
-        if armPresent:
-            print ('ArmPresent', frameNo, ballCounter)
-            bit_GPIO(pinsGPIO,1023)
-            time.sleep(10)
-            armPresent = False
-            ballCounter = 0
-            # writeImageSeries(2,3,frame2)
-            continue
+        if done ==True:
+            done = False
+            ballCounter = ballCounter +1
+            lightsOFF(segment7s)
+            GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+            print('Ball Timer Awake ', ballCounter)
+        while (GPIO.input(sensor[1]) == GPIO.HIGH):
+                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print('Deadwood ', ballCounter)
+                done = True
+        while (GPIO.input(sensor[2]) == GPIO.HIGH):
+                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print('Reset ', ballCounter)
+                ballCounter = 0
+                lightsOFF(segment7s)
+                GPIO.output((segment7All[0]), GPIO.LOW)
+                done = True
 
-        # frame2= getCroppedImage(frame2, ballCrops)
-        # # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        # img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-        # diff = cv2.absdiff(mask_gray,img_gray)
-        # # First value reduces noise.  Values above 150 seem to miss certain ball colors
-        # ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
-        # frame = thresh
-        # # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-        # thresh = cv2.medianBlur(thresh,13)
-        # # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
-        # cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
-        #     cv2.CHAIN_APPROX_SIMPLE)[-2]
-        # # center = None
-        # # radius = 0
-        # if len(cnts) == 0:
-        #     if ballPresent == True:
-        #         ballPresent = False
-        #         ballCounter = ballCounter + 1
-        #         print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
-        # else:
-        #     ballPresent = True
-       
+        if frameNo%2 == 0:
+            findPins()
         # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         writeImageSeries(30, 3, img_rgb)
         if frameNo%4 == 0:

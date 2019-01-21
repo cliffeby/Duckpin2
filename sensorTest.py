@@ -6,7 +6,6 @@ import myGPIO
 import time
 
 sensor = myGPIO.sensor
-# sensor = [26, 21, 20]
 ballCounter = 0
 
 
@@ -19,12 +18,13 @@ def setupGPIO(pins):
 
 
 def tripSet():
-    global sensor, ballCounter, segment7s, segment7All
+    global sensor
     for s in sensor:
         GPIO.setup(s, GPIO.OUT)
         GPIO.output(s, GPIO.LOW)
         time.sleep(.5)
         GPIO.setup(s, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+    print('Sensor setup complete')
 
 
 setupGPIO(sensor)
@@ -33,13 +33,14 @@ done = True
 
 while True:
 
-    print('Sensor', ballCounter, GPIO.input(sensor[0]), GPIO.input(
-        sensor[1]), GPIO.input(sensor[2]))
+    # print('Sensor', ballCounter, GPIO.input(sensor[0]), GPIO.input(
+    #     sensor[1]), GPIO.input(sensor[2]))
 
     # while (GPIO.input(sensor[0]) == GPIO.HIGH):
     #     ballCounter = ballCounter + 1
     #     # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
     #     print('Ball ', ballCounter)
+   
     while (GPIO.input(sensor[0]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 # print('Ball Timer Awake ', ballCounter)
@@ -48,6 +49,7 @@ while True:
             GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
             print('Falling edge')
             done = True
+            time.sleep(1.5)
         except KeyboardInterrupt:
             GPIO.cleanup()
     if done == True:

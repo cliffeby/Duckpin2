@@ -68,8 +68,8 @@ wait1 = 2
 setupGPIO(leds)
 lightsOFF(leds)
 
-lightTESTa(leds,1.1,0)
-lightTESTa(leds[::1], 10.5,0)
+lightTESTa(leds,1,0)
+lightTESTa(ledAll[::1], 1.5,0)
 lightsOFF(leds)
 # listTEST(ledAll)
 # trip()

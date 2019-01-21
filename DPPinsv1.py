@@ -368,10 +368,12 @@ with picamera.PiCamera() as camera:
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
                 print('Falling edge')
                 done = True
+                time.sleep(2)
             except KeyboardInterrupt:
                 GPIO.cleanup()
         
         if done ==True:
+            done = False
             ballCounter = ballCounter +1
             lightsOFF(segment7s)
             GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
@@ -384,7 +386,7 @@ with picamera.PiCamera() as camera:
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Reset ', ballCounter)
                 ballCounter = 0
-                lightsOFF(segment7s)
+                bit_GPIO(pinsGPIO,1023)
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 done = True
 
