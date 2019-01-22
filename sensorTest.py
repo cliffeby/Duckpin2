@@ -47,17 +47,21 @@ while True:
         done = False
         try:
             GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-            print('Falling edge')
+            print('done')
             done = True
-            time.sleep(1.5)
+            time.sleep(.05)
+            if GPIO.input(sensor[0]) == 0:
+                
+                ballCounter= ballCounter+1
+                print ("FALLING", ballCounter)
         except KeyboardInterrupt:
             GPIO.cleanup()
-    if done == True:
-        done = False
-        ballCounter = ballCounter + 1
-        # lightsOFF(segment7s)
-        # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-        print('Ball Timer Awake ', ballCounter)
+    # if done == True:
+    #     done = False
+    #     ballCounter = ballCounter + 1
+    #     # lightsOFF(segment7s)
+    #     # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+    #     print('Ball Timer Awake ', ballCounter)
 
     while (GPIO.input(sensor[1]) == GPIO.HIGH):
             # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
