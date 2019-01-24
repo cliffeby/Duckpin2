@@ -37,11 +37,20 @@ def getCroppedImage(image,crop_array):
 
 def setupGPIO(pins):
     GPIO.setmode(GPIO.BOARD)
-    time.sleep(.5)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)
     print ("setup Completed")
+
+def bit_GPIO(pins,pinCount):
+    bits = "{0:b}".format(pinCount)
+    while len(bits)<10:
+        bits = "0"+bits
+    for idx in range(0,len(bits)):
+        if(bits[idx]=="1"):
+             GPIO.output(pins[idx], GPIO.HIGH)
+        else:
+            GPIO.output(pins[idx], GPIO.LOW)
 
 def lightsOFF(pins):
     for pin in pins:
@@ -54,16 +63,6 @@ def tripSet():
         GPIO.output(s, GPIO.LOW)
         time.sleep(.5)
         GPIO.setup(s, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
- 
-def bit_GPIO(pins,pinCount):
-    bits = "{0:b}".format(pinCount)
-    while len(bits)<10:
-        bits = "0"+bits
-    for idx in range(0,len(bits)):
-        if(bits[idx]=="1"):
-             GPIO.output(pins[idx], GPIO.HIGH)
-        else:
-            GPIO.output(pins[idx], GPIO.LOW)
 
 def getMaskFrame():
     global mask_gray, resetArmCrops, ballCrops, img_gray1arm
@@ -137,40 +136,6 @@ def isPinSetter():
     if setterPresent:
         activity = activity + str(priorPinCount)+ ',-2,'
         print("Green", area, frameNo, activity)
-    return
-
-def isResetArm():
-    global firstArmFrame, armPresent, ballCounter
-    global frameNo
-    global img_rgb
-    global img_gray1arm
-    global threshArm
-    global resetArmCrops
-    global priorPinCount
-    
-    frame2arm = getCroppedImage(img_rgb, resetArmCrops)
-    img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
-    # print('IMG GRAY ARM', img_gray1arm, img_gray2arm, frame2arm, type(frame2arm))
-    # print(type(img_gray1arm), type(img_gray2arm))
-    diff = cv2.absdiff(img_gray1arm,img_gray2arm)
-    # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
-    # frame = threshArm
-    # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    threshArm = cv2.medianBlur(threshArm,15)
-    # cv2.imshow('arm trhesh', threshArm)
-    cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
-		cv2.CHAIN_APPROX_SIMPLE)[-2]
-
-    if len(cnts) > 0:
-		# find the largest contour in the mask, then use
-		# it to compute the minimum enclosing circle and centroid
-        c = max(cnts, key=cv2.contourArea)
-        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
-        if radius > 2:
-            print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
-            armPresent = True
-            ballCounter = 0
     return
 
 def findPins():
@@ -296,7 +261,8 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
-done = True
+lightsOFF(segment7s)
+GPIO.output((segment7All[0]), GPIO.LOW)
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
@@ -330,39 +296,31 @@ with picamera.PiCamera() as camera:
         while (GPIO.input(sensor[0]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 # print('Ball Timer Awake ', ballCounter)
-            done = False
-        try:
             GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
             print('done')
-            done = True
             time.sleep(.05)
             if GPIO.input(sensor[0]) == 0:
-                
                 ballCounter= ballCounter+1
                 print ("FALLING", ballCounter)
-        except KeyboardInterrupt:
-            GPIO.cleanup()
-    # if done == True:
-    #     done = False
-    #     ballCounter = ballCounter + 1
-    #     # lightsOFF(segment7s)
-    #     # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-    #     print('Ball Timer Awake ', ballCounter)
+
+                lightsOFF(segment7s)
+                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+                print('Ball Timer Awake ', ballCounter)
         while (GPIO.input(sensor[1]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Deadwood ', ballCounter)
-                done = True
+                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
+                print('done')
+                time.sleep(1)
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Reset ', ballCounter)
                 ballCounter = 0
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[0]), GPIO.LOW)
+                bit_GPIO(pinsGPIO,1023)
                 done = True
 
-        if frameNo%2 == 0:
-            findPins()
-        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
         writeImageSeries(30, 3, img_rgb)
         if frameNo%4 == 0:
             findPins()

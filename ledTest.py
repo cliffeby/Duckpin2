@@ -80,3 +80,4 @@ lightsOFF(leds5)
 
 #     bit_GPIO(leds3,ss) 
 #     time.sleep(30)     
+GPIO.cleanup()
