@@ -16,7 +16,7 @@ led7 = myGPIO.segment7s
 
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BOARD)
+    GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)

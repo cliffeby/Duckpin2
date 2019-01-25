@@ -4,22 +4,22 @@ import myGPIO
 from random import randint
 
 
-leds = myGPIO.segment7s#[8,24,23,15,7,25,14]
-led0 = myGPIO.segment7_0#[8,24,23,15,7,25]
-led1 = myGPIO.segment7_1#[8,24]
-led2 = myGPIO.segment7_2#[8,23,15,25,14]
-led3 = myGPIO.segment7_3#[8,24,23,25,14]
-led4 = myGPIO.segment7_4#[8,24,7,14]
-led5 = myGPIO.segment7_5#[24,23,7,25,14]
-led6 = myGPIO.segment7_6#[24,23,15,7,14]
-led7 = myGPIO.segment7_7#[8,24,25]
-led8 = myGPIO.segment7_8#[8,24,23,15,7,25,14]
-led9 = myGPIO.segment7_9#[8,24,23,7,25,14]
+leds = myGPIO.segment7s  # [8,24,23,15,7,25,14]
+led0 = myGPIO.segment7_0  # [8,24,23,15,7,25]
+led1 = myGPIO.segment7_1  # [8,24]
+led2 = myGPIO.segment7_2  # [8,23,15,25,14]
+led3 = myGPIO.segment7_3  # [8,24,23,25,14]
+led4 = myGPIO.segment7_4  # [8,24,7,14]
+led5 = myGPIO.segment7_5  # [24,23,7,25,14]
+led6 = myGPIO.segment7_6  # [24,23,15,7,14]
+led7 = myGPIO.segment7_7  # [8,24,25]
+led8 = myGPIO.segment7_8  # [8,24,23,15,7,25,14]
+led9 = myGPIO.segment7_9  # [8,24,23,7,25,14]
 ledAll = [led0, led1, led2, led3, led4, led5, led6, led7, led8, led9]
 
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BOARD)
+    GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin, GPIO.OUT)
@@ -35,13 +35,13 @@ def lightsOFF(pins):
 
 
 def lightTESTa(pins, wait1, wait2):
-    i=0
+    i = 0
     for pin in pins:
-        print("Pin ", pin, i ,"is on")
+        print("Pin ", pin, i, "is on")
         GPIO.output(pin, GPIO.LOW)
         time.sleep(wait1)
         print("Pin ", pin, "is off")
-        i=i+1
+        i = i+1
         GPIO.output(pin, GPIO.HIGH)
         time.sleep(wait2)
 
@@ -63,13 +63,14 @@ def timeout():
     timesup = True
     print('Timer is finished', timesup)
 
+
 wait1 = 2
 
 setupGPIO(leds)
 lightsOFF(leds)
 
-lightTESTa(leds,1,0)
-lightTESTa(ledAll[::1], 1.5,0)
+lightTESTa(leds, 1, 0)
+lightTESTa(ledAll[::1], 1.5, 0)
 lightsOFF(leds)
 # listTEST(ledAll)
 # trip()

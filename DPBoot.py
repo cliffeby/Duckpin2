@@ -33,7 +33,7 @@ def getCroppedImage(image,crop_array):
     return croppedImage
 
 def setupGPIO(pins):
-    GPIO.setmode(GPIO.BOARD)
+    GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
     for pin in pins:
         GPIO.setup(pin,GPIO.OUT)
