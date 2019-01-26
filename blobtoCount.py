@@ -41,11 +41,11 @@ def basic_blockblob_operations(account):
         print('Download the blob', file, 'path', downloadDir)
         blockblob_service.get_blob_to_path(dpContainer, file, downloadDir+file)
     
-    # Delete blob from Azure container
-        print('Delete  Blob ', downloadDir+file)
-        blockblob_service.delete_blob(dpContainer, file)
-
-        
+    # Delete .h264 blob from Azure container.  Keep .jpeg - log of crop locations
+        if ".h264" in file:
+            print('Delete  Blob ', downloadDir+file)
+            blockblob_service.delete_blob(dpContainer, file)
+      
 def findBeg(file):
     # Parse file name for beginning and ending pin state
     # File name format is C:/DownloadsDP/Lane4Free\dp _1023_695_.h264
