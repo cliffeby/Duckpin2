@@ -47,7 +47,7 @@ for seg in [0,2,3,4,5,6]:
 
 segment7All = [segment7_0, segment7_1, segment7_2, segment7_3,
                segment7_4, segment7_5, segment7_6, segment7_7, segment7_8, segment7_9]
-print(segment7_0, segment7_4,segment7_8)
+# print(segment7_0, segment7_4,segment7_8)
 # Pin leds
 
 pinsGPIO = [7,5,6,12,13,19,16,26,20,21]
