@@ -16,9 +16,6 @@ import picamera.array
 from PIL import Image
 
 pinsGPIO = myGPIO.pinsGPIO
-sensor = myGPIO.sensor
-segment7s = myGPIO.segment7s
-segment7All = myGPIO.segment7All
 pin_crop_ranges = cropdata1440.pin_crop_ranges
 resetArmCrops = cropdata1440.resetArmCrops
 resetArmCrops = [36,350,1220,1350]
@@ -51,18 +48,6 @@ def bit_GPIO(pins,pinCount):
              GPIO.output(pins[idx], GPIO.HIGH)
         else:
             GPIO.output(pins[idx], GPIO.LOW)
-
-def lightsOFF(pins):
-    for pin in pins:
-        GPIO.output(pin, GPIO.HIGH)
-        
-def tripSet():
-    global sensor
-    for s in sensor:
-        GPIO.setup(s, GPIO.OUT)
-        GPIO.output(s, GPIO.LOW)
-        time.sleep(.5)
-        GPIO.setup(s, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 def getMaskFrame():
     global mask_gray, resetArmCrops, ballCrops, img_gray1arm
@@ -107,6 +92,70 @@ def write_video(stream,result):
     # Wipe the circular stream once we're done
     stream.seek(0)
     stream.truncate()
+
+def isPinSetter():
+    global setterPresent
+    global frameNo
+    global img_rgb
+    global firstSetterFrame
+    global activity
+    
+    # Convert BGR to HSV
+    frame =  getCroppedImage(img_rgb, pinSetterCrops)
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    # define range of green color in HSV
+    lower_green = numpy.array([65,60,60])
+    upper_green = numpy.array([80,255,255])
+    # Threshold the HSV image to get only green colors
+    mask = cv2.inRange(hsv, lower_green, upper_green)
+    res = cv2.bitwise_and(frame,frame, mask=mask)
+    _,thrshed = cv2.threshold(cv2.cvtColor(res,cv2.COLOR_BGR2GRAY),3,255,cv2.THRESH_BINARY)
+    _,contours,_ = cv2.findContours(thrshed,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+    setterPresent = False
+    area = 0
+    for cnt in contours:
+        #Contour area is measured
+        area = cv2.contourArea(cnt) +area
+    if area >1000:
+        setterPresent = True
+    if setterPresent:
+        activity = activity + str(priorPinCount)+ ',-2,'
+        print("Green", area, frameNo, activity)
+    return
+
+def isResetArm():
+    global firstArmFrame, armPresent, ballCounter
+    global frameNo
+    global img_rgb
+    global img_gray1arm
+    global threshArm
+    global resetArmCrops
+    global priorPinCount
+    
+    frame2arm = getCroppedImage(img_rgb, resetArmCrops)
+    img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
+    # print('IMG GRAY ARM', img_gray1arm, img_gray2arm, frame2arm, type(frame2arm))
+    # print(type(img_gray1arm), type(img_gray2arm))
+    diff = cv2.absdiff(img_gray1arm,img_gray2arm)
+    # First value reduces noise.  Values above 150 seem to miss certain ball colors
+    ret, threshArm = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    # frame = threshArm
+    # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
+    threshArm = cv2.medianBlur(threshArm,15)
+    # cv2.imshow('arm trhesh', threshArm)
+    cnts = cv2.findContours(threshArm.copy(), cv2.RETR_EXTERNAL,
+		cv2.CHAIN_APPROX_SIMPLE)[-2]
+
+    if len(cnts) > 0:
+		# find the largest contour in the mask, then use
+		# it to compute the minimum enclosing circle and centroid
+        c = max(cnts, key=cv2.contourArea)
+        ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+        if radius > 2:
+            print('Reset Arm', frameNo, len(cnts), ballCounter, " ", priorPinCount)
+            armPresent = True
+            ballCounter = 0
+    return
 
 def findPins():
         global x,x1,y,y1
@@ -182,30 +231,6 @@ def iotSend(buf, result):
 
     iot.print_last_message_time(client)
 
-def iotSendImg(buf):
-    global frameNo
-    try:
-        client = iot.iothub_client_init()
-        # if client.protocol == IoTHubTransportProvider.MQTT:
-        print ( "IoTHubClient is reporting state" )
-        reported_state = "{\"newState\":\"standBy\"}"
-        # td = datetime.now()
-        client.send_reported_state(reported_state, len(reported_state), iot.send_reported_state_callback, iot.SEND_REPORTED_STATE_CONTEXT)
-        filename = "imgdp" + time.strftime('%A') + ".jpg"
-        f = open(buf, "rb+")
-        content = f.read()
-        
-        print("CONTENT LEN", len(content), type(content))
-        client.upload_blob_async(filename,content, len(content), iot.blob_upload_conf_callback,1001)
-
-    except iot.IoTHubError as iothub_error:
-        print ( "Unexpected error %s from IoTHub" % iothub_error )
-        return
-    except KeyboardInterrupt:
-        print ( "IoTHubClient sample stopped" )
-
-    iot.print_last_message_time(client)
-
 def drawPinRectangles():
     global ball_image,img_rgb,x,y
     global pin_crop_ranges
@@ -215,7 +240,7 @@ def drawPinRectangles():
     # NOTE: crop is img[y: y + h, x: x + w] 
     # cv2.rectangle is a = (x,y) , b=(x1,y1)
 
-    for i in range(0,10):
+    for i in range(0,9):
         a =(pin_crop_ranges[i][2]+mx,pin_crop_ranges[i][0]+my)
         b = (pin_crop_ranges[i][3]+mx, pin_crop_ranges[i][1]+my)
         cv2.rectangle(ball_image, b, a, 255, 2)
@@ -228,18 +253,15 @@ def drawPinRectangles():
     cv2.rectangle(ball_image, b, a, 255, 2)
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBallPinMask'+str(i) +'.jpg',ball_image)
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
     a = (resetArmCrops[2]+mx, resetArmCrops[0]+my)
     b = (resetArmCrops[3]+mx, resetArmCrops[1]+my)
     cv2.rectangle(ball_image, b, a, 255, 2)
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBallPinArmMask'+str(i) +'.jpg',ball_image)
-    # iotSendImg(ball_image)
-    
+    cv2.imwrite('/home/pi/Shared/videos/CCEBBallMask'+str(i) +'.jpg',ball_image)
+
 setupGPIO(pinsGPIO)
-setupGPIO(segment7s)
-tripSet()
 getMaskFrame()
 setterPresent = False
 armPresent = False
@@ -256,8 +278,6 @@ frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 0
 video_preseconds = 3
-lightsOFF(segment7s)
-GPIO.output((segment7All[0]), GPIO.LOW)
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
@@ -288,43 +308,51 @@ with picamera.PiCamera() as camera:
         frame2arm = getCroppedImage(frame2, resetArmCrops)
         img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
-        while (GPIO.input(sensor[0]) == GPIO.HIGH):
-                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                # print('Ball Timer Awake ', ballCounter)
-            GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-            print('done')
-            time.sleep(.05)
-            if GPIO.input(sensor[0]) == 0:
-                ballCounter= ballCounter+1
-                print ("Falling edge", ballCounter)
-                lightsOFF(segment7s)
-                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Ball Timer Awake ', ballCounter)
-               
-        while (GPIO.input(sensor[1]) == GPIO.HIGH):
-                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Deadwood ', ballCounter)
-                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-                ballCounter=ballCounter+1
-                lightsOFF(segment7s)
-                GPIO.output((segment7All[ballCounter]), GPIO.LOW)
-                print('done')
-                time.sleep(3)
-        while (GPIO.input(sensor[2]) == GPIO.HIGH):
-                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Reset ', ballCounter)
-                ballCounter = 0
-                print('Reset1 ', ballCounter)
-                lightsOFF(segment7s)
-                GPIO.output((segment7All[0]), GPIO.LOW)
+        isPinSetter()   #Deadwood
+        if setterPresent:
+            print('SetterPresent', frameNo, ballCounter)
+            bit_GPIO(pinsGPIO,priorPinCount)
+            if priorPinCount==0:
                 bit_GPIO(pinsGPIO,1023)
-                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-                time.sleep(2)
-                print('done')
-           
-            
+                ballCounter = 0
+            time.sleep(10)
+            setterPresent = False
+            continue
+        
+        # isResetArm()    #Reset
+        # if armPresent:
+        #     print ('ArmPresent', frameNo, ballCounter)
+        #     bit_GPIO(pinsGPIO,1023)
+        #     time.sleep(10)
+        #     armPresent = False
+        #     ballCounter = 0
+        #     # writeImageSeries(2,3,frame2)
+        #     continue
 
-        writeImageSeries(30, 1, img_rgb)
+        # frame2= getCroppedImage(frame2, ballCrops)
+        # # img_gray1 = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        # img_gray = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+        # diff = cv2.absdiff(mask_gray,img_gray)
+        # # First value reduces noise.  Values above 150 seem to miss certain ball colors
+        # ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+        # frame = thresh
+        # # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
+        # thresh = cv2.medianBlur(thresh,13)
+        # # print(type(thresh), type(diff),type(img_gray1), type(img_gray2))
+        # cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
+        #     cv2.CHAIN_APPROX_SIMPLE)[-2]
+        # # center = None
+        # # radius = 0
+        # if len(cnts) == 0:
+        #     if ballPresent == True:
+        #         ballPresent = False
+        #         ballCounter = ballCounter + 1
+        #         print("BALLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL", ballCounter, 'at frame ', frameNo-1)
+        # else:
+        #     ballPresent = True
+       
+        # camera.annotate_text = "Date "+ str(time.process_time()) + " Frame " + str(frameNo) + " Prior " + str(priorPinCount)
+        writeImageSeries(30, 3, img_rgb)
         if frameNo%4 == 0:
             findPins()
         
