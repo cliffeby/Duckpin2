@@ -235,7 +235,7 @@ def drawPinRectangles():
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEBallPinArmMask'+str(i) +'.jpg',ball_image)
-    iotSendImg(ball_image)
+    # iotSendImg(ball_image)
     
 setupGPIO(pinsGPIO)
 setupGPIO(segment7s)
@@ -296,25 +296,33 @@ with picamera.PiCamera() as camera:
             time.sleep(.05)
             if GPIO.input(sensor[0]) == 0:
                 ballCounter= ballCounter+1
-                print ("FALLING", ballCounter)
-
+                print ("Falling edge", ballCounter)
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Ball Timer Awake ', ballCounter)
+               
         while (GPIO.input(sensor[1]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Deadwood ', ballCounter)
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
+                ballCounter=ballCounter+1
+                lightsOFF(segment7s)
+                GPIO.output((segment7All[ballCounter]), GPIO.LOW)
                 print('done')
-                time.sleep(1)
+                time.sleep(3)
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Reset ', ballCounter)
                 ballCounter = 0
+                print('Reset1 ', ballCounter)
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 bit_GPIO(pinsGPIO,1023)
-                done = True
+                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
+                time.sleep(2)
+                print('done')
+           
+            
 
         writeImageSeries(30, 1, img_rgb)
         if frameNo%4 == 0:

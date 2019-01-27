@@ -4,8 +4,8 @@
 segment7s = [2, 3, 4, 14, 15, 17, 18]
 
 segment7_0 = []  # [1,2,3,4,5,6]
-segment7_1 = []  # [3,4]
-segment7_2 = []  # [0,1,3,5,6]
+segment7_1 = []  # [4,6]
+segment7_2 = []  # [[0,1,3,5,6]
 segment7_3 = []  # [0,3,4,5,6]
 segment7_4 = []  # [0,2,4,6]
 segment7_5 = []  # [0,2,3,4,5]
@@ -17,10 +17,10 @@ segment7_9 = []  # [0,2,3,4,5,6]
 for seg in [1, 2, 3, 4, 5, 6]:
     segment7_0.append(segment7s[seg])
 # 1
-for seg in [3,4]:
+for seg in [4,6]:
     segment7_1.append(segment7s[seg])
 # 2
-for seg in [0,1,4,6,]:
+for seg in [0,1,3,5,6]:
     segment7_2.append(segment7s[seg])
 # 3
 for seg in [0,3,4,5,6]:
@@ -52,7 +52,7 @@ segment7All = [segment7_0, segment7_1, segment7_2, segment7_3,
 
 pinsGPIO = [7,5,6,12,13,19,16,26,20,21]
 #  Laser trip-wire GPIO
-sensor = [23,22,27]
+sensor = [22,23,27]
 
 
 
