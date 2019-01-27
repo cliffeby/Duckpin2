@@ -91,7 +91,6 @@ def write_video(stream,result):
     print("writng dp ", result)
     #setup ram dsk
 
-
     with io.open('/dp/log/firstFile.h264', 'wb') as output:
         for frame in stream.frames:
             if frame.frame_type == picamera.PiVideoFrameType.sps_header:
@@ -235,7 +234,7 @@ def drawPinRectangles():
     cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEBallPinArmMask'+str(i) +'.jpg',ball_image)
-    # iotSendImg(ball_image)
+    iotSendImg('/home/pi/Shared/videos/CCEPinMask9.jpg')
     
 setupGPIO(pinsGPIO)
 setupGPIO(segment7s)
@@ -304,12 +303,7 @@ with picamera.PiCamera() as camera:
         while (GPIO.input(sensor[1]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Deadwood ', ballCounter)
-                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-                ballCounter=ballCounter+1
-                lightsOFF(segment7s)
-                GPIO.output((segment7All[ballCounter]), GPIO.LOW)
-                print('done')
-                time.sleep(3)
+                
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
                 # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Reset ', ballCounter)
@@ -319,7 +313,7 @@ with picamera.PiCamera() as camera:
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 bit_GPIO(pinsGPIO,1023)
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-                time.sleep(2)
+                time.sleep(5)
                 print('done')
            
             
