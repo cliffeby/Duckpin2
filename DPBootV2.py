@@ -20,10 +20,6 @@ sensor = myGPIO.sensor
 segment7s = myGPIO.segment7s
 segment7All = myGPIO.segment7All
 pin_crop_ranges = cropdata1440.pin_crop_ranges
-resetArmCrops = cropdata1440.resetArmCrops
-resetArmCrops = [36,350,1220,1350]
-pinSetterCrops = cropdata1440.pinSetterCrops
-ballCrops = cropdata1440.ballCrops
 
 def setResolution():
     resX = 1440  #640
@@ -222,27 +218,11 @@ def drawPinRectangles():
             cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEPinMask'+str(i) +'.jpg',ball_image)
-    a = (ballCrops[2]+mx,ballCrops[0]+my)
-    b = (ballCrops[3]+mx, ballCrops[1]+my)
-    cv2.rectangle(ball_image, b, a, 255, 2)
-    cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBallPinMask'+str(i) +'.jpg',ball_image)
-    a = (resetArmCrops[2]+mx, resetArmCrops[0]+my)
-    b = (resetArmCrops[3]+mx, resetArmCrops[1]+my)
-    cv2.rectangle(ball_image, b, a, 255, 2)
-    cv2.putText(ball_image,str(a),a,cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
-    cv2.imwrite('/home/pi/Shared/videos/CCEBallPinArmMask'+str(i) +'.jpg',ball_image)
     iotSendImg('/home/pi/Shared/videos/CCEPinMask9.jpg')
     
 setupGPIO(pinsGPIO)
 setupGPIO(segment7s)
 tripSet()
-getMaskFrame()
-setterPresent = False
-armPresent = False
-ballPresent = False
 priorPinCount = 0
 pinsFalling = False
 timesup = True
@@ -253,8 +233,6 @@ y=-20
 y1=0 + y
 frameNo = 0
 ballCounter = 0
-videoReadyFrameNo = 0
-video_preseconds = 3
 lightsOFF(segment7s)
 GPIO.output((segment7All[0]), GPIO.LOW)
 
@@ -272,7 +250,6 @@ with picamera.PiCamera() as camera:
     #camera.start_recording('test.h264', splitter_port=1)
     # wait 2 seconds for stable video data
     camera.wait_recording(2, splitter_port=1)
-    # motion_detected = False
     print(camera.resolution)
 
     for frame in camera.capture_continuous(rawCapture,format="bgr",  use_video_port=True):
@@ -284,12 +261,8 @@ with picamera.PiCamera() as camera:
         frame2 = frame.array
         frameNo = frameNo +1
         img_rgb = frame2
-        frame2arm = getCroppedImage(frame2, resetArmCrops)
-        img_gray2arm = cv2.cvtColor(frame2arm, cv2.COLOR_BGR2GRAY)
 
         while (GPIO.input(sensor[0]) == GPIO.HIGH):
-                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                # print('Ball Timer Awake ', ballCounter)
             GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
             print('done')
             time.sleep(.05)
@@ -301,11 +274,9 @@ with picamera.PiCamera() as camera:
                 print('Ball Timer Awake ', ballCounter)
                
         while (GPIO.input(sensor[1]) == GPIO.HIGH):
-                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Deadwood ', ballCounter)
                 
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
-                # GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Reset ', ballCounter)
                 ballCounter = 0
                 print('Reset1 ', ballCounter)
@@ -315,14 +286,7 @@ with picamera.PiCamera() as camera:
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
                 time.sleep(5)
                 print('done')
-           
-            
 
         writeImageSeries(30, 1, img_rgb)
         if frameNo%4 == 0:
             findPins()
-        
-        # key = cv2.waitKey(1000) & 0xFF
-        # # if the `q` key was pressed, break from the loop
-        # if key == ord("q"):
-        #     break
