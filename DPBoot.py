@@ -229,10 +229,12 @@ timesup = True
 activity = "\r\n"
 x=25
 x1=0 +x
-y=-20
+y=-15
 y1=0 + y
 frameNo = 0
 ballCounter = 0
+videoReadyFrameNo = 10
+deadwoodTimer = time.time()
 lightsOFF(segment7s)
 GPIO.output((segment7All[0]), GPIO.LOW)
 
@@ -271,11 +273,10 @@ with picamera.PiCamera() as camera:
                 print ("Falling edge", ballCounter)
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Ball Timer Awake ', ballCounter)
-               
+                print('Ball Timer Awake ', ballCounter)               
         while (GPIO.input(sensor[1]) == GPIO.HIGH):
                 print('Deadwood ', ballCounter)
-                
+                # deadwoodTimer = time.time()
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
                 print('Reset ', ballCounter)
                 ballCounter = 0
@@ -284,9 +285,13 @@ with picamera.PiCamera() as camera:
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 bit_GPIO(pinsGPIO,1023)
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-                time.sleep(5)
+                time.sleep(9)
                 print('done')
 
         writeImageSeries(30, 1, img_rgb)
+        # if deadwoodTimer+10<time.time():
+        #     print(deadwoodTimer, time.time())
         if frameNo%4 == 0:
-            findPins()
+                findPins()
+        # else:
+        #     print('Skipped findPins()')
