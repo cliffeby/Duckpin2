@@ -202,6 +202,7 @@ while(cap.isOpened()):
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
 		# only proceed if the radius meets a minimum size
         if radius > 20:
+            # Find the xy center of the ball in the frame then,
             # draw the circle on the frame,
             # then update the list of tracked points
             M = cv2.moments(c)
@@ -209,7 +210,12 @@ while(cap.isOpened()):
             xyData = (center[0], center[1])
             pinData.append(xyData)
             cv2.drawContours(img_gray_show, c, -1, (0,255,0), 3)
-            if oldxyData != None:
+            # Eliminate centers of early half ball contours
+            if center[1]>380:
+                xyData = oldxyData
+                continue
+            # Eliminate centers of slow and backward moving balls
+            elif oldxyData != None:
                 if dist(oldxyData,xyData,15):
                     pinData.pop()
                     xyData = oldxyData
