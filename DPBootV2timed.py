@@ -103,16 +103,18 @@ def write_video(stream,result):
     stream.seek(0)
     stream.truncate()
 
+def timeout():
+        global timesup
+        timesup = True
+        print ('Timer is finished', timesup)
+
 def findPins():
         global x,x1,y,y1
         global priorPinCount, frameNo
         global img_rgb
         global frame2
         global pinsFalling, timesup  # initial values False, True
-        def timeout():
-            global timesup
-            timesup = True
-            print ('Timer is finished', timesup)
+        
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
@@ -219,22 +221,6 @@ def drawPinRectangles():
             cv2.putText(ball_image,str(b),(b[0]-250,b[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255),2)
     cv2.imwrite('/home/pi/Shared/videos/CCEPinMask'+str(i) +'.jpg',ball_image)
     iotSendImg('/home/pi/Shared/videos/CCEPinMask9.jpg')
-
-def ballCount():
-    global ballCounter, pin_change_timer, reset_timer, deadwood_timer, ballCounterFlag
-    if time.time() > reset_timer+10:
-        if ballCounterFlag==False:
-            ballCounter = True
-    if time.time() > pin_change_timer+10:
-        if ballCounterFlag==False:
-            ballCounterFlag = True
-    if time.time() > deadwood_timer+10:
-        if ballCounterFlag==False:
-            ballCounterFlag = True
-    if ballCounterFlag:
-        ballCounter=ballCounter+1
-    ballCounterFlag = False
-    return
     
 setupGPIO(pinsGPIO)
 setupGPIO(segment7s)
@@ -243,12 +229,14 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=25
+x=33
 x1=0 +x
-y=-20
+y=-10
 y1=0 + y
 frameNo = 0
 ballCounter = 0
+videoReadyFrameNo = 10
+deadwoodTimer = time.time()
 lightsOFF(segment7s)
 GPIO.output((segment7All[0]), GPIO.LOW)
 
@@ -283,16 +271,18 @@ with picamera.PiCamera() as camera:
             print('done')
             time.sleep(.05)
             if GPIO.input(sensor[0]) == 0:
-                ballCounterFlag = True
+                ballCounter= ballCounter+1
                 print ("Falling edge", ballCounter)
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Ball Timer Awake ', ballCounter)
-                ballCount()
-               
-        while (GPIO.input(sensor[1]) == GPIO.HIGH):
+                print('Ball Timer Awake ', ballCounter)               
+        if (GPIO.input(sensor[1]) == GPIO.HIGH):
                 print('Deadwood ', ballCounter)
-                
+                if timesup == True:
+                    t = threading.Timer(8.0, timeout)
+                    timesup = False
+                    t.start() # after 8.0 seconds, stream will be saved
+                    print ('Deadwood timer is running', ballCounter)
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
                 print('Reset ', ballCounter)
                 ballCounter = 0
@@ -301,10 +291,17 @@ with picamera.PiCamera() as camera:
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 bit_GPIO(pinsGPIO,1023)
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-                time.sleep(5)
-                reset_timer = time.time()
-                print('done')
+                if timesup == True:
+                    t = threading.Timer(3.0, timeout)
+                    timesup = False
+                    t.start() # after 3.0 seconds, stream will be saved
+                    print ('Reset timer is running', ballCounter)
 
         writeImageSeries(30, 1, img_rgb)
-        if frameNo%4 == 0:
-            findPins()
+        # if deadwoodTimer+10<time.time():
+        #     print(deadwoodTimer, time.time())
+        if frameNo%4== 0:
+            if timesup:
+                findPins()
+        # else:
+        #     print('Skipped findPins()')
