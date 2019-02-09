@@ -106,7 +106,17 @@ def write_video(stream,result):
 def timeout():
         global timesup
         timesup = True
-        print ('Timer is finished', timesup)
+        print ('Pin timer is finished', timesup)
+
+def timeoutDeadwood():
+        global timesupDeadwood
+        timesupDeadwood = True
+        print ('Deadwood timer is finished', timesupDeadwood)
+
+def timeoutReset():
+        global timesupReset
+        timesupReset = True
+        print ('Deadwood timer is finished', timesupReset)
 
 def findPins():
         global x,x1,y,y1
@@ -231,12 +241,14 @@ timesup = True
 activity = "\r\n"
 x=33
 x1=0 +x
-y=-10
+y=-15
 y1=0 + y
 frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 10
-deadwoodTimer = time.time()
+timesupDeadwood = True
+timesupReset = True
+# deadwoodTimer = time.time()
 lightsOFF(segment7s)
 GPIO.output((segment7All[0]), GPIO.LOW)
 
@@ -272,16 +284,16 @@ with picamera.PiCamera() as camera:
             time.sleep(.05)
             if GPIO.input(sensor[0]) == 0:
                 ballCounter= ballCounter+1
-                print ("Falling edge", ballCounter)
+                print ("Ball Falling edge", ballCounter)
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Ball Timer Awake ', ballCounter)               
         if (GPIO.input(sensor[1]) == GPIO.HIGH):
                 print('Deadwood ', ballCounter)
-                if timesup == True:
-                    t = threading.Timer(8.0, timeout)
-                    timesup = False
-                    t.start() # after 8.0 seconds, stream will be saved
+                if timesupDeadwood == True:
+                    t = threading.Timer(10.0, timeoutDeadwood)
+                    timesupDeadwood = False
+                    t.start() # after x seconds, stream will be saved
                     print ('Deadwood timer is running', ballCounter)
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
                 print('Reset ', ballCounter)
@@ -291,9 +303,9 @@ with picamera.PiCamera() as camera:
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 bit_GPIO(pinsGPIO,1023)
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
-                if timesup == True:
-                    t = threading.Timer(3.0, timeout)
-                    timesup = False
+                if timesupReset == True:
+                    t = threading.Timer(3.0, timeoutReset)
+                    timesupReset = False
                     t.start() # after 3.0 seconds, stream will be saved
                     print ('Reset timer is running', ballCounter)
 
@@ -301,7 +313,7 @@ with picamera.PiCamera() as camera:
         # if deadwoodTimer+10<time.time():
         #     print(deadwoodTimer, time.time())
         if frameNo%4== 0:
-            if timesup:
+            if timesup ==True and timesupDeadwood ==True and timesupReset== True:
                 findPins()
         # else:
         #     print('Skipped findPins()')
