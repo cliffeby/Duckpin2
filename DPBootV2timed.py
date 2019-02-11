@@ -291,22 +291,21 @@ with picamera.PiCamera() as camera:
         if (GPIO.input(sensor[1]) == GPIO.HIGH):
                 print('Deadwood ', ballCounter)
                 if timesupDeadwood == True:
-                    t = threading.Timer(10.0, timeoutDeadwood)
+                    tDeadwood = threading.Timer(10.0, timeoutDeadwood)
                     timesupDeadwood = False
-                    t.start() # after x seconds, stream will be saved
+                    tDeadwood.start() # after x seconds, stream will be saved
                     print ('Deadwood timer is running', ballCounter)
         while (GPIO.input(sensor[2]) == GPIO.HIGH):
-                print('Reset ', ballCounter)
+                print('Reset -pre', ballCounter)
                 ballCounter = 0
-                print('Reset1 ', ballCounter)
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 bit_GPIO(pinsGPIO,1023)
                 GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
                 if timesupReset == True:
-                    t = threading.Timer(3.0, timeoutReset)
+                    tReset = threading.Timer(3.0, timeoutReset)
                     timesupReset = False
-                    t.start() # after 3.0 seconds, stream will be saved
+                    tReset.start() # after 3.0 seconds, stream will be saved
                     print ('Reset timer is running', ballCounter)
 
         writeImageSeries(30, 1, img_rgb)
