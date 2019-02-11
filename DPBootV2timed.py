@@ -116,7 +116,7 @@ def timeoutDeadwood():
 def timeoutReset():
         global timesupReset
         timesupReset = True
-        print ('Deadwood timer is finished', timesupReset)
+        print ('Reset timer is finished', timesupReset)
 
 def findPins():
         global x,x1,y,y1
@@ -289,30 +289,31 @@ with picamera.PiCamera() as camera:
                 GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
                 print('Ball Timer Awake ', ballCounter)               
         if (GPIO.input(sensor[1]) == GPIO.HIGH):
-                print('Deadwood ', ballCounter)
+                print('Deadwood sensor', ballCounter)
                 if timesupDeadwood == True:
-                    tDeadwood = threading.Timer(10.0, timeoutDeadwood)
+                    tDeadwood = threading.Timer(12.0, timeoutDeadwood)
                     timesupDeadwood = False
-                    tDeadwood.start() # after x seconds, stream will be saved
-                    print ('Deadwood timer is running', ballCounter)
-        while (GPIO.input(sensor[2]) == GPIO.HIGH):
-                print('Reset -pre', ballCounter)
+                    tDeadwood.start()
+                    print ('Deadwood timer has started', ballCounter)
+        if (GPIO.input(sensor[2]) == GPIO.HIGH):
+                print('Reset sensor-pre', ballCounter)
                 ballCounter = 0
                 lightsOFF(segment7s)
                 GPIO.output((segment7All[0]), GPIO.LOW)
                 bit_GPIO(pinsGPIO,1023)
-                GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
+                GPIO.wait_for_edge(sensor[2], GPIO.FALLING)
                 if timesupReset == True:
-                    tReset = threading.Timer(3.0, timeoutReset)
+                    tReset = threading.Timer(12.0, timeoutReset)
                     timesupReset = False
-                    tReset.start() # after 3.0 seconds, stream will be saved
+                    tReset.start()
                     print ('Reset timer is running', ballCounter)
 
         writeImageSeries(30, 1, img_rgb)
         # if deadwoodTimer+10<time.time():
         #     print(deadwoodTimer, time.time())
         if frameNo%4== 0:
-            if timesup ==True and timesupDeadwood ==True and timesupReset== True:
+            if timesupDeadwood and timesupReset:
+                print(timesup,timesupDeadwood,timesupReset)
                 findPins()
         # else:
         #     print('Skipped findPins()')
