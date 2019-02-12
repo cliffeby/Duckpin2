@@ -118,9 +118,18 @@ def timeoutReset():
         timesupReset = True
         print ('Deadwood timer is finished', timesupReset)
 
+def flash():
+    for i in range(1,5):    
+        bit_GPIO(pinsGPIO,1023)
+        lightsOFF(segment7s)        
+        time.sleep(.4)
+        lightsOFF(pinsGPIO)
+        GPIO.output((segment7All[8]), GPIO.LOW)
+        time.sleep(.4)
+
 def findPins():
         global x,x1,y,y1
-        global priorPinCount, frameNo
+        global priorPinCount, frameNo, ballCounter
         global img_rgb
         global frame2
         global pinsFalling, timesup  # initial values False, True
@@ -151,6 +160,8 @@ def findPins():
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
                     if priorPinCount == 1023:
                         write_video(stream, result)
+                    if ballCounter == 0 and priorPinCount == 1023 and pinCount == 0:
+                        flash()
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
