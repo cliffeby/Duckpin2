@@ -118,9 +118,18 @@ def timeoutReset():
         timesupReset = True
         print ('Reset timer is finished', timesupReset)
 
+def flash():
+    for i in range(1,6):
+        bit_GPIO(pinsGPIO, 1023)
+        lightsOFF(segment7s)
+        time.sleep(.3)
+        bit_GPIO(pinsGPIO,0)
+        GPIO.output((segment7All[8]), GPIO.LOW)
+        time.sleep(.3)
+
 def findPins():
         global x,x1,y,y1
-        global priorPinCount, frameNo
+        global priorPinCount, frameNo, ballCounter
         global img_rgb
         global frame2
         global pinsFalling, timesup  # initial values False, True
@@ -151,6 +160,8 @@ def findPins():
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
                     if priorPinCount == 1023:
                         write_video(stream, result)
+                        if ballCounter == 0 and pinCount == 0:
+                            flash()
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
@@ -282,7 +293,7 @@ with picamera.PiCamera() as camera:
             GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
             print('done')
             time.sleep(.05)
-            if GPIO.input(sensor[0]) == 0:
+            if GPIO.input(sensor[0]) == 0 and timesupReset == True:
                 ballCounter= ballCounter+1
                 print ("Ball Falling edge", ballCounter)
                 lightsOFF(segment7s)
@@ -303,7 +314,7 @@ with picamera.PiCamera() as camera:
                 bit_GPIO(pinsGPIO,1023)
                 GPIO.wait_for_edge(sensor[2], GPIO.FALLING)
                 if timesupReset == True:
-                    tReset = threading.Timer(12.0, timeoutReset)
+                    tReset = threading.Timer(15.0, timeoutReset)
                     timesupReset = False
                     tReset.start()
                     print ('Reset timer is running', ballCounter)
