@@ -119,7 +119,7 @@ def timeoutReset():
         print ('Reset timer is finished', timesupReset)
 
 def flash():
-    for i in range(1,6):
+    for i in range(1,10):
         bit_GPIO(pinsGPIO, 1023)
         lightsOFF(segment7s)
         time.sleep(.3)
@@ -314,7 +314,7 @@ with picamera.PiCamera() as camera:
                 bit_GPIO(pinsGPIO,1023)
                 GPIO.wait_for_edge(sensor[2], GPIO.FALLING)
                 if timesupReset == True:
-                    tReset = threading.Timer(15.0, timeoutReset)
+                    tReset = threading.Timer(5.0, timeoutReset)
                     timesupReset = False
                     tReset.start()
                     print ('Reset timer is running', ballCounter)
