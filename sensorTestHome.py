@@ -6,7 +6,7 @@ import myGPIO
 import time
 
 sensor = myGPIO.sensor
-sensor[0] = 17
+# sensor[0] = 17
 ballCounter = 0
 
 
