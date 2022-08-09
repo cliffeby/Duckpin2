@@ -68,6 +68,7 @@ def tripSet():
         GPIO.setup(s, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
 def getMaskFrame():
+    # Not used in V2 or V3
     global mask_gray, resetArmCrops, ballCrops, img_gray1arm
     frame1 = cv2.imread('/home/pi/Shared/histImage/BallMask.jpg',1)
     img_arm = getCroppedImage(frame1, resetArmCrops)
