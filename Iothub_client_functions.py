@@ -9,11 +9,16 @@ import random
 from random import randint
 import time
 import sys
-import iothub_client
-from iothub_client import IoTHubClient, IoTHubClientError, IoTHubTransportProvider, IoTHubClientResult
-from iothub_client import IoTHubMessage, IoTHubMessageDispositionResult, IoTHubError, DeviceMethodReturnValue
-from iothub_client import IoTHubClientRetryPolicy, GetRetryPolicyReturnValue
-from iothub_client_args import get_iothub_opt, OptionError
+# import iothub_client
+# from iothub_client import IoTHubClient, IoTHubClientError, IoTHubTransportProvider, IoTHubClientResult
+# from iothub_client import IoTHubMessage, IoTHubMessageDispositionResult, IoTHubError, DeviceMethodReturnValue
+# from iothub_client import IoTHubClientRetryPolicy, GetRetryPolicyReturnValue
+# from iothub_client_args import get_iothub_opt, OptionError
+# From GitHub Migration v1 to v2
+from azure.iot.device.aio import IoTHubDeviceClient
+from azure.iot.device import Message
+from azure.core.exceptions import AzureError
+from azure.storage.blob import BlobClient
 
 TIMEOUT = 241000
 MINIMUM_POLLING_TIME = 9
@@ -41,10 +46,36 @@ SEND_REPORTED_STATE_CALLBACKS = 0
 METHOD_CALLBACKS = 0
 
 # chose HTTP, AMQP, AMQP_WS or MQTT as transport protocol
-PROTOCOL = IoTHubTransportProvider.MQTT
+# v1 PROTOCOL = IoTHubTransportProvider.MQTT
 CONNECTION_STRING = credentials.loginFree["ConnectionString"]
 
 # MSGLane4_TXT = "{\"deviceId\": \"myPythonDevice\",\"PinsCCC\": \"% i,\"}"
+
+def store_blob(blob_info, file_name):
+    try:
+        sas_url = "https://{}/{}/{}{}".format(
+            credentials.blob_info["hostName"],
+            credentials.blob_info["containerName"],
+            credentials.blob_info["blobName"],
+            credentials.blob_info["sasToken"]
+        )
+
+        print("\nUploading file: {} to Azure Storage as blob: {} in container {}\n".format(file_name, blob_info["blobName"], blob_info["containerName"]))
+
+        # Upload the specified file
+        with BlobClient.from_blob_url(sas_url) as blob_client:
+            with open(file_name, "rb") as f:
+                result = blob_client.upload_blob(f, overwrite=True)
+                return (True, result)
+
+    except FileNotFoundError as ex:
+        # catch file not found and add an HTTP status code to return in notification to IoT Hub
+        ex.status_code = 404
+        return (False, ex)
+
+    except AzureError as ex:
+        # catch Azure errors that might result from the upload operation
+        return (False, ex)
 
 def receive_message_callback(message, counter):
     global RECEIVE_CALLBACKS
@@ -106,18 +137,20 @@ def blob_upload_conf_callback(result, user_context):
 
 def iothub_client_init():
     # prepare iothub client
-    client = IoTHubClient(CONNECTION_STRING, PROTOCOL)
-    client.set_option("messageTimeout", MESSAGE_TIMEOUT)
-    client.set_option("logtrace", 0)
-    client.set_message_callback(receive_message_callback, RECEIVE_CONTEXT)
-    retryPolicy = IoTHubClientRetryPolicy.RETRY_INTERVAL
-    retryInterval = 100
-    client.set_retry_policy(retryPolicy, retryInterval)
-    print ( "SetRetryPolicy to: retryPolicy = %d" %  retryPolicy)
-    print ( "SetRetryPolicy to: retryTimeoutLimitInSeconds = %d" %  retryInterval)
-    retryPolicyReturn = client.get_retry_policy()
-    print ( "GetRetryPolicy returned: retryPolicy = %d" %  retryPolicyReturn.retryPolicy)
-    print ( "GetRetryPolicy returned: retryTimeoutLimitInSeconds = %d" %  retryPolicyReturn.retryTimeoutLimitInSeconds)
+    # v1 client = IoTHubClient(CONNECTION_STRING, PROTOCOL)
+    client = IoTHubDeviceClient.create_from_connection_string(CONNECTION_STRING)
+#     await client.connect()
+#     client.set_option("messageTimeout", MESSAGE_TIMEOUT)
+#     client.set_option("logtrace", 0)
+#     client.set_message_callback(receive_message_callback, RECEIVE_CONTEXT)
+#     retryPolicy = IoTHubClientRetryPolicy.RETRY_INTERVAL
+#     retryInterval = 100
+#     client.set_retry_policy(retryPolicy, retryInterval)
+#     print ( "SetRetryPolicy to: retryPolicy = %d" %  retryPolicy)
+#     print ( "SetRetryPolicy to: retryTimeoutLimitInSeconds = %d" %  retryInterval)
+#     retryPolicyReturn = client.get_retry_policy()
+#     print ( "GetRetryPolicy returned: retryPolicy = %d" %  retryPolicyReturn.retryPolicy)
+#     print ( "GetRetryPolicy returned: retryTimeoutLimitInSeconds = %d" %  retryPolicyReturn.retryTimeoutLimitInSeconds)
     return client
 
 def print_last_message_time(client):
