@@ -151,18 +151,18 @@ def findPins():
         output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
         threshold1 = 10
         for i in range(0,10):
-                crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1,pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
-                hist = cv2.calcHist([crop[i]],[1],None,[4], [10,50])
+                crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1, pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
+                hist = cv2.calcHist([crop[i]], [1], None, [4], [10, 50])
                 sumHist[i] = hist[0]+hist[1]+hist[2]+hist[3]
                 # print (i, sumHist[i])
                 if threshold1 < sumHist[i]:
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-        if frameNo == 140:
-            result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
-            write_video(stream, result)
-            return
+        # if frameNo == 140:
+        #     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
+        #     write_video(stream, result)
+        #     return
         if pinsFalling == True:
                 if timesup == False:
                     return
@@ -176,16 +176,15 @@ def findPins():
                     priorPinCount = pinCount
                     pinsFalling = False
                     return
-        if priorPinCount <= pinCount: 
+        if priorPinCount <= pinCount:
             priorPinCount = pinCount
             return
-        
         else:
             pinsFalling = True
             t = threading.Timer(2.0, timeout)
             timesup = False
             t.start() # after 2.0 seconds, stream will be saved
-            print ('timer is running', priorPinCount, pinCount)
+            print('timer is running', priorPinCount, pinCount)
             return
 
 def iotSend(filename, result):
@@ -197,7 +196,6 @@ def iotSend(filename, result):
         print ("IoT Hub file upload sample, press Ctrl-C to exit")
         client.connect()
     
-        
 
     # Get the storage info for the blob
         blob_name = os.path.basename(filename)
