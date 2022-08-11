@@ -159,10 +159,10 @@ def findPins():
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-        # if frameNo == 140:
-        #     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
-        #     write_video(stream, result)
-        #     return
+        if frameNo == 140:
+             result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
+             write_video(stream, result)
+             return
         if pinsFalling == True:
                 if timesup == False:
                     return
@@ -199,7 +199,7 @@ def iotSend(filename, result):
 
     # Get the storage info for the blob
         blob_name = os.path.basename(filename)
-        vidfile = "vid" + str(frameNo) + ".h264"
+        vidfile = "dp" + result + ".h264"
         storage_info = client.get_storage_info_for_blob(vidfile)
         print("blob_name2 +++: ", blob_name, filename, storage_info)
 
