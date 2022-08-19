@@ -154,7 +154,7 @@ def findPins():
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1, pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 hist = cv2.calcHist([crop[i]], [1], None, [4], [10, 50])
                 sumHist[i] = hist[0]+hist[1]+hist[2]+hist[3]
-                print (i, sumHist[i])
+#                 print (i, sumHist[i])
                 if threshold1 < sumHist[i]:
                     pinCount = pinCount + 2**(9-i)
 
