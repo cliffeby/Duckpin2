@@ -95,8 +95,8 @@ def findPins(img_rgb, img_rgb1):
                 print (i,k,d,  hists, Shist)
 
 
-img = cv2.imread('C:/Users/cliff/pictures/BArmMask.jpg',1)
-imge = cv2.imread('C:/Users/cliff/pictures/BArmMaskerase.jpg',1)
+img = cv2.imread('/home/cliffeby/Downloads/imgdpMonday.jpg',1)
+imge = cv2.imread('/home/cliffeby/Downloads/imgdpThursday.jpg',1)
 findPins(img, imge)
 drawPinRectangles(imge)
 

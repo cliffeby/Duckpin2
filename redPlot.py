@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import cropdata640
+import cropdata1440
 from matplotlib import pyplot as plt
 
 
@@ -41,8 +41,8 @@ def findPins(img):
 
 
 x = y = x1 = y1 = 0
-pin_crop_ranges = cropdata640.pin_crop_ranges
-img = cv2.imread("C:/Users/cliff/OneDrive/pyProjects/vidim/All/image1.jpg")
+pin_crop_ranges = cropdata1440.pin_crop_ranges
+img = cv2.imread("/home/cliffeby/Downloads/imgdpThursday (1).jpg")
 img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 cv2.imshow('ddd', img)
 
@@ -76,7 +76,7 @@ findPins(img)
 #     plt.xlim([0, 256])
 # plt.show()
 
-img1 = cv2.imread("C:/Users/cliff/OneDrive/pyProjects/vidim/Some/image1.jpg")
+img1 = cv2.imread("/home/cliffeby/Downloads/imgdpThursday (1).jpg")
 img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2HSV)
 cv2.imshow('ddd1', img1)
 

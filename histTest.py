@@ -18,19 +18,23 @@ def plot_histogram(image, title, mask=None):
 		plt.plot(hist, color=color)
 		plt.xlim([0, 256])
         # load the beach image and plot a histogram for it
-image = cv2.imread("beach.png")
+image = cv2.imread("/home/cliffeby/Downloads/imgdpMonday (2).jpg")
 plot_histogram(image, "Histogram for Original Image")
 cv2.imshow("Original", image)
+# r = image[:,:,2]
+# cv2.imshow("Red", r)
+# b = image[:,:,0]
+# cv2.imshow("Blue", b)
 # construct a mask for our image; our mask will be *black* for regions
 # we want to *ignore* and *white* for regions we want to *examine*
 mask = np.zeros(image.shape[:2], dtype="uint8")
-cv2.rectangle(mask, (60, 290), (210, 390), 255, -1)
+cv2.rectangle(mask, (400, 50), (420, 65), 255, -1)
 cv2.imshow("Mask", mask)
 # display the masked region
 masked = cv2.bitwise_and(image, image, mask=mask)
 cv2.imshow("Applying the Mask", masked)
 # compute a histogram for our image, but we'll only include pixels in
 # the masked region
-plot_histogram(image, "Histogram for Masked Image", mask=mask)
+plot_histogram(masked, "Histogram for Masked Image", mask=mask)
 # show our plots
 plt.show()
