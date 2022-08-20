@@ -144,17 +144,17 @@ def findPins():
         pinCount = 0
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
-        lower_red = numpy.array([0,0,70]) # lower_red = np.array([0,100,0])
-        upper_red = numpy.array([110, 110, 255])  # upper_red = np.array([180,255,255])
-
+        lower_red = numpy.array([0,42,0]) # lower_red = np.array([0,100,0])
+        upper_red = numpy.array([16, 255, 126])  # upper_red = np.array([180,255,255])
+        img_rgb = cv2.cvtColor(img_rgb, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(img_rgb,lower_red,upper_red)
         output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
-        threshold1 = 10
+        threshold1 = 1
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1, pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 hist = cv2.calcHist([crop[i]], [1], None, [4], [10, 50])
                 sumHist[i] = hist[0]+hist[1]+hist[2]+hist[3]
-                # print (i, sumHist[i])
+                print (i, sumHist[i])
                 if threshold1 < sumHist[i]:
                     pinCount = pinCount + 2**(9-i)
 
