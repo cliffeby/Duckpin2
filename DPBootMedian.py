@@ -144,12 +144,12 @@ def findPins():
         
         pinCount = 0
         crop = []
-        threshold1 = 40
+        threshold1 = 30
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1, pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
                 a =crop[i].mean()
                 print (i, a)
-                if threshold1 > a:
+                if threshold1 < a:
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
