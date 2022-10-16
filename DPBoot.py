@@ -145,7 +145,7 @@ def findPins():
         crop = []
         sumHist = [0,0,0,0,0,0,0,0,0,0]
         lower_red = numpy.array([0,0,70]) # lower_red = np.array([0,100,0])
-        upper_red = numpy.array([110, 110, 255])  # upper_red = np.array([180,255,255])
+        upper_red = numpy.array([110, 110, 255])  # upper_red = n  p.array([180,255,255])
 
         mask = cv2.inRange(img_rgb,lower_red,upper_red)
         output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
@@ -311,9 +311,9 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=35   # - (minus) moves crops x pixels right
+x=23   # - (minus) moves crops x pixels left
 x1=0 +x
-y=-55  # -(minus) moves crop y pixels up
+y=-45  # -(minus) moves crop y pixels up
 y1=0 + y
 frameNo = 0
 ballCounter = 0
