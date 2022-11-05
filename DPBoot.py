@@ -169,7 +169,7 @@ def findPins():
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
-                    if priorPinCount == 1023:
+                    if priorPinCount > 0:  ## 1023 for full
                         write_video(stream, result)
                         if ballCounter == 0 and pinCount == 0:
                             flash()
