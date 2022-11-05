@@ -140,22 +140,16 @@ def findPins():
         global img_rgb
         global frame2
         global pinsFalling, timesup  # initial values False, True
+        output = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2GRAY)
         
         pinCount = 0
         crop = []
-        sumHist = [0,0,0,0,0,0,0,0,0,0]
-        lower_red = numpy.array([0,0,70]) # lower_red = np.array([0,100,0])
-        upper_red = numpy.array([110, 110, 255])  # upper_red = n  p.array([180,255,255])
-
-        mask = cv2.inRange(img_rgb,lower_red,upper_red)
-        output = cv2.bitwise_and(img_rgb, img_rgb, mask=mask)
-        threshold1 = 1
+        threshold1 = 30
         for i in range(0,10):
                 crop.append(output[pin_crop_ranges[i][0]+y:pin_crop_ranges[i][1]+y1, pin_crop_ranges[i][2]+x:pin_crop_ranges[i][3]+x1])
-                hist = cv2.calcHist([crop[i]], [1], None, [4], [10, 50])
-                sumHist[i] = hist[0]+hist[1]+hist[2]+hist[3]
-#                 print (i, sumHist[i])
-                if threshold1 < sumHist[i]:
+                a =crop[i].mean()
+                print (i, a)
+                if threshold1 < a:
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
@@ -169,7 +163,7 @@ def findPins():
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
-                    if priorPinCount > 0:  ## 1023 for full
+                    if priorPinCount == 1023:
                         write_video(stream, result)
                         if ballCounter == 0 and pinCount == 0:
                             flash()
@@ -311,9 +305,9 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=23   # - (minus) moves crops x pixels left
+x=35   # - (minus) moves crops x pixels right
 x1=0 +x
-y=-45  # -(minus) moves crop y pixels up
+y=-55  # -(minus) moves crop y pixels up
 y1=0 + y
 frameNo = 0
 ballCounter = 0
