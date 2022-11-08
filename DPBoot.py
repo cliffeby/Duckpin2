@@ -384,8 +384,8 @@ with picamera.PiCamera() as camera:
         # if deadwoodTimer+10<time.time():
         #     print(deadwoodTimer, time.time())
         if frameNo%4== 0:
+            print(timesup,timesupDeadwood,timesupReset, frameNo)
             if timesupDeadwood and timesupReset:
-                print(timesup,timesupDeadwood,timesupReset, frameNo)
                 findPins()
         # else:
         #     print('Skipped findPins()')
