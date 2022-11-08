@@ -113,6 +113,10 @@ def dist(old,new, thresh):
     # Is ball moving backward - y axis
     if old[1] - new[1]<0:
         return True
+    # Is ball moving sideways or is sensor #2 not detecting deadwood or reset
+    if old[0] - new[0]> 20:
+        print('Arm detected')
+        return True
     return False
 
 def getCroppedImage(image,crop_array):
