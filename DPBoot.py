@@ -159,17 +159,17 @@ def findPins():
                     pinCount = pinCount + 2**(9-i)
 
         bit_GPIO(pinsGPIO,pinCount)
-        if frameNo == 140:
-             result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
-             write_video(stream, result)
-             return
+        # if frameNo == 140:
+        #      result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
+        #      write_video(stream, result)
+        #      return
         if pinsFalling == True:
                 if timesup == False:
                     return
                 else:
                     result = " _"+ str(priorPinCount)+"_" + str(pinCount) + "_" +str(frameNo)
                     print("FrameNo ", frameNo, "PinCount ", priorPinCount, "_",pinCount, result )
-                    if priorPinCount > 0:  ## 1023 for full
+                    if priorPinCount > 0 and priorPinCount != pinCount:  ## priorPinCount == 1023 for full
                         write_video(stream, result)
                         if ballCounter == 0 and pinCount == 0:
                             flash()
