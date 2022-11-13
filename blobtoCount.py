@@ -1,22 +1,29 @@
 # import the necessary packages
-import random, string
-import datetime, copy
-import credentials
-from azure.storage import CloudStorageAccount
-from azure.storage.table import TableService, Entity
-from azure.storage.blob import BlockBlobService, PageBlobService, AppendBlobService
-import cropdata1440  #defines ball crops - area before ball hits pins
-import time
-import cv2
-import numpy, math
+import copy
+import datetime
 import glob
-import os, sys
+import math
+import os
+import random
+import string
+import sys
+import time
+
+import cv2
+import numpy
+from azure.storage import CloudStorageAccount
+from azure.storage.blob import (AppendBlobService, BlockBlobService,
+                                PageBlobService)
+from azure.storage.table import Entity, TableService
+
+import credentials
+import cropdata1440  # defines ball crops - area before ball hits pins
 
 account_name = credentials.STORAGE_ACCOUNT_NAME
 account_key = credentials.STORAGE_ACCOUNT_KEY
 account = CloudStorageAccount(account_name, account_key)
 ball_crops = cropdata1440.ballCrops
-ball_crops = [460,885,10,1200]
+ball_crops = [460, 885, 10, 1200]
 
 def basic_blockblob_operations(account):
 
@@ -54,7 +61,7 @@ def findBeg(file):
     pinsBA = [0,0]
     while index < len(file):
         index = file.find('_', index)
-        if index==-1:
+        if index == -1:
             # No more underscores found in string
             break
         loc.append(index)
@@ -93,7 +100,7 @@ def insertRows(file, xy):
     except Exception as err:
         print('Error creating table, ' + table_name + 'check if it already exists')
     rowkey = str(getRowKey())
-    pinevent ={'PartitionKey':'Lane 4','RowKey': rowkey,'res':'1440', 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
+    pinevent = {'PartitionKey':'Lane 4','RowKey': rowkey,'res':'1440', 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
     if len(xy) < 2:  #In a dictionary the key and value are counted as one entry
         print('Entry only contains one xy pair and has been removed ', rowkey)
         return
@@ -119,7 +126,7 @@ def dist(old, new, thresh):
         return True
     return False
 
-def getCroppedImage(image,crop_array):
+def getCroppedImage(image, crop_array):
     croppedImage = image[crop_array[0]:crop_array[1],crop_array[2]:crop_array[3]]
     return croppedImage
 
@@ -152,17 +159,17 @@ img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 img_gray_show = copy.deepcopy(img_gray1)
 img_gray_show_line = copy.deepcopy(img_gray1)
 
-while(cap.isOpened()):
+while (cap.isOpened()):
     ret, frame2 = cap.read()
     try:
         type(frame2[0]) is None
     except:
-        print ("End of Video ", fileCounter)
+        print("End of Video ", fileCounter)
         
         if fileCounter < len(a)-1:
             cap.release()
             xy = formatxy(pinData)
-            if len(xy)>0:
+            if len(xy) > 0:
                 insertRows(a[fileCounter], xy)
             else:
                 print('No ball data in Video ', fileCounter)
@@ -181,20 +188,20 @@ while(cap.isOpened()):
             else:
                 print('No ball data in final Video ', fileCounter)
             print('No more data to process')
-            cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg',img_gray_show_line )
+            cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg', img_gray_show_line)
             print('Saving line image ')
             cleanup()  # Delete files from local storage
             break
     img_rgb = frame2
     if frame2 is None:
         continue
-    frame2 = getCroppedImage(frame2,ball_crops)
+    frame2 = getCroppedImage(frame2, ball_crops)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1, img_gray2)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(diff, 120, 255, cv2.THRESH_BINARY)
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
-    thresh = cv2.medianBlur(thresh,5)
+    thresh = cv2.medianBlur(thresh, 5)
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
     center = None
