@@ -104,17 +104,17 @@ def insertRows(file, xy):
     table_service.insert_entity(table_name, pinevent)        
     print('Successfully inserted the new entity into table - ' + file, table_name, pinevent)
 
-def dist(old,new, thresh):
+def dist(old, new, thresh):
     # Checks for very slow ball movement or arm looking like a ball
     # Is ball moving greater than trhesh in pixels
     l2 = (old[0] - new[0])**2 + (old[1] -new[1])**2
-    if math.sqrt(l2)< thresh:
+    if math.sqrt(l2) < thresh:
         return True
     # Is ball moving backward - y axis
-    if old[1] - new[1]<0:
+    if old[1] - new[1] < 0:
         return True
     # Is ball moving sideways (x-axis) or is sensor #2 not detecting deadwood or reset
-    if abs(old[0] - new[0])> 20:
+    if abs(old[0] - new[0] +10) > 20:
         print('Arm detected')
         return True
     return False
@@ -147,7 +147,7 @@ pinData = []
 fileCounter = 0
 cap = cv2.VideoCapture(a[0])
 ret, frame1 = cap.read()
-frame1= getCroppedImage(frame1,ball_crops)
+frame1 = getCroppedImage(frame1, ball_crops)
 img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 img_gray_show = copy.deepcopy(img_gray1)
 img_gray_show_line = copy.deepcopy(img_gray1)
@@ -188,9 +188,9 @@ while(cap.isOpened()):
     img_rgb = frame2
     if frame2 is None:
         continue
-    frame2= getCroppedImage(frame2,ball_crops)
+    frame2 = getCroppedImage(frame2,ball_crops)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-    diff = cv2.absdiff(img_gray1,img_gray2)
+    diff = cv2.absdiff(img_gray1, img_gray2)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
     ret, thresh = cv2.threshold(diff, 120,255,cv2.THRESH_BINARY)
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
@@ -210,24 +210,24 @@ while(cap.isOpened()):
             # draw the circle on the frame,
             # then update the list of tracked points
             M = cv2.moments(c)
-            center = (int(my_division(M["m10"],M["m00"])), int(my_division( M["m01"], M["m00"])))
+            center = (int(my_division(M["m10"],M["m00"])), int(my_division(M["m01"], M["m00"])))
             xyData = (center[0], center[1])
             pinData.append(xyData)
-            cv2.drawContours(img_gray_show, c, -1, (0,255,0), 3)
+            cv2.drawContours(img_gray_show, c, -1, (0, 255, 0), 3)
             # Eliminate centers of early half ball contours
             if center[1]>380:
                 xyData = oldxyData
                 continue
             # Eliminate centers of slow and backward moving balls
             elif oldxyData != None:
-                if dist(oldxyData,xyData,15):
+                if dist(oldxyData, xyData, 5):
                     pinData.pop()
                     xyData = oldxyData
-                    print ('Ball not moving - dist and location', xyData )
+                    print('Ball not moving - dist and location', xyData)
                 else:
-                    cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0,255,0),1)
-                    cv2.circle(img_gray_show_line, xyData,3, (0,255,0),-1)
-                    cv2.circle(img_gray_show_line, oldxyData,3, (0,255,0),-1)
+                    cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0, 255, 0), 1)
+                    cv2.circle(img_gray_show_line, xyData, 3, (0, 255, 0), -1)
+                    cv2.circle(img_gray_show_line, oldxyData, 3, (0, 255, 0), -1)
                 
             oldxyData = xyData
 
