@@ -8,28 +8,39 @@ import random
 import string
 import sys
 import time
-
+import credentials
 import cv2
 import numpy
-from azure.storage import CloudStorageAccount
-from azure.storage.blob import (AppendBlobService, BlockBlobService,
-                                PageBlobService)
-from azure.storage.table import Entity, TableService
+# from azure.storage import CloudStorageAccount
+from azure.storage.blob import BlobServiceClient
 
-import credentials
+
+# from azure.storage.blob import (AppendBlobService, BlockBlobService,
+#                                 PageBlobService)
+# from azure.storage.table import Entity, TableService
+from azure.data.tables import TableClient, TableServiceClient
+
+
 import cropdata1440  # defines ball crops - area before ball hits pins
+
+from azure.core.credentials import AzureNamedKeyCredential
+from azure.data.tables import TableServiceClient
+
+
 
 account_name = credentials.STORAGE_ACCOUNT_NAME
 account_key = credentials.STORAGE_ACCOUNT_KEY
-account = CloudStorageAccount(account_name, account_key)
+account = AzureNamedKeyCredential(account_name, account_key)
+# account = CloudStorageAccount(account_name, account_key)
 ball_crops = cropdata1440.ballCrops
 ball_crops = [460, 885, 10, 1200]
 
 def basic_blockblob_operations(account):
 
     # # Create a Block Blob Service object
-    blockblob_service = account.create_block_blob_service()
-    blockblob_service = BlockBlobService(account_name, account_key)
+    blockblob_service = BlobServiceClient(account_url="https://duckpinjson.blob.core.windows.net/", credential=credentials.connString)
+    # blockblob_service = account.create_block_blob_service()
+    # blockblob_service = BlockBlobService(account_name, account_key)
     
     # Check if blobs exist in Azure container, and 
     # List and download all the blobs in the container 
@@ -94,6 +105,12 @@ def insertRows(file, xy):
     
     table_service = account.create_table_service()
     table_name = 'pindata'
+
+    table_service_client = TableServiceClient.from_connection_string(conn_str=credentials.connString)
+    # table_service_client = TableServiceClient(endpoint="https://<my_account_name>.table.core.windows.net", credential=AzureSasCredential(sas_token))
+    table_client = table_service_client.get_table_client(table_name='pindata')
+
+    # entity = table_client.create_entity(entity=my_entity)
     # Create a new table
     try:
         table_service.create_table(table_name)
