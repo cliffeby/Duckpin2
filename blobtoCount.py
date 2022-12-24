@@ -4,66 +4,53 @@ import datetime
 import glob
 import math
 import os
-import random
-import string
-import sys
 import time
 import credentials
 import cv2
-import numpy
-# from azure.storage import CloudStorageAccount
-from azure.storage.blob import BlobServiceClient
-
-
-# from azure.storage.blob import (AppendBlobService, BlockBlobService,
-#                                 PageBlobService)
-# from azure.storage.table import Entity, TableService
-from azure.data.tables import TableClient, TableServiceClient
-
-
 import cropdata1440  # defines ball crops - area before ball hits pins
-
+from azure.storage.blob import BlobServiceClient
 from azure.core.credentials import AzureNamedKeyCredential
 from azure.data.tables import TableServiceClient
+from azure.core.credentials import AzureNamedKeyCredential
+from azure.identity import DefaultAzureCredential
 
-
-
+account_url = "https://duckpinjson.blob.core.windows.net"
+account_urlTable = "https://duckpinjson.table.core.windows.net"
+default_credential = DefaultAzureCredential()
 account_name = credentials.STORAGE_ACCOUNT_NAME
 account_key = credentials.STORAGE_ACCOUNT_KEY
 account = AzureNamedKeyCredential(account_name, account_key)
-# account = CloudStorageAccount(account_name, account_key)
+table_name='pindata'
+container = 'jsoncontdp'
+downloadDir = 'c:/DownloadsDP/' 
 ball_crops = cropdata1440.ballCrops
 ball_crops = [460, 885, 10, 1200]
 
-def basic_blockblob_operations(account):
+# Create the BlobServiceClient object
+blob_service_client = BlobServiceClient(account_url, credential=account)
+blob_client = blob_service_client.get_blob_client(container=container, blob='any_file_name')
+container_client = blob_service_client.get_container_client(container)
+print("\nListing blobs...")
 
-    # # Create a Block Blob Service object
-    blockblob_service = BlobServiceClient(account_url="https://duckpinjson.blob.core.windows.net/", credential=credentials.connString)
-    # blockblob_service = account.create_block_blob_service()
-    # blockblob_service = BlockBlobService(account_name, account_key)
+# List the blobs in the container
+blob_list = container_client.list_blobs()
+for blob in blob_list:
+    print("\t" + blob.name)
+    file = blob.name
     
-    # Check if blobs exist in Azure container, and 
-    # List and download all the blobs in the container 
-    dpContainer = 'jsoncontdp'
-    print('List Blobs in Container')    
-    generator = blockblob_service.list_blobs(dpContainer)
-    if sum(1 for _ in generator) == 0:
-        print('No blobs to process -- program ending')
-        exit(0)
-    for blob in generator:
-        print('\tBlob Name: ' + blob.name, blob.properties)
-        file = blob.name
+# Download the blob
+    container_client.get_blob_client(container,file)
     
-    # Download the blob
-        downloadDir = 'c:/DownloadsDP/' 
-        print('Download the blob', file, 'path', downloadDir)
-        blockblob_service.get_blob_to_path(dpContainer, file, downloadDir+file)
-    
-    # Delete .h264 blob from Azure container.  Keep .jpeg - log of crop locations
+    file1 = downloadDir+file
+
+    with open(file1, "wb") as my_blob:
+        download_stream = container_client.download_blob(file)
+        my_blob.write(download_stream.readall())
+
         if ".h264" in file:
             print('Delete  Blob ', downloadDir+file)
-            blockblob_service.delete_blob(dpContainer, file)
-      
+            container_client.delete_blob(file)
+
 def findBeg(file):
     # Parse file name for beginning and ending pin state
     # File name format is C:/DownloadsDP/Lane4Free\dp _1023_695_.h264
@@ -95,27 +82,22 @@ def insertRows(file, xy):
     # Insert row into Azure table
     global pinData, account
     print('Azure Storage Table Duckpins - Starting row entry.')
-    table_service = None
+    # table_service = None
         
     def getRowKey():
         #Azure tables need a unique row key
         x= datetime.datetime.now()
         rowID = x.strftime('%Y')+x.strftime('%m')+ x.strftime('%d')+x.strftime('%f')
         return rowID
-    
-    table_service = account.create_table_service()
-    table_name = 'pindata'
 
-    table_service_client = TableServiceClient.from_connection_string(conn_str=credentials.connString)
-    # table_service_client = TableServiceClient(endpoint="https://<my_account_name>.table.core.windows.net", credential=AzureSasCredential(sas_token))
-    table_client = table_service_client.get_table_client(table_name='pindata')
+    table_service_client = TableServiceClient(account_urlTable, credential=account)
+    table_client = table_service_client.get_table_client(table_name=table_name)
 
-    # entity = table_client.create_entity(entity=my_entity)
-    # Create a new table
+    # Create a table in case it does not already exist
     try:
-        table_service.create_table(table_name)
+        table_client.create_table()
     except Exception as err:
-        print('Error creating table, ' + table_name + 'check if it already exists')
+        print('Error creating table, '  + 'check if it already exists')
     rowkey = str(getRowKey())
     pinevent = {'PartitionKey':'Lane 4','RowKey': rowkey,'res':'1440', 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
     if len(xy) < 2:  #In a dictionary the key and value are counted as one entry
@@ -125,7 +107,7 @@ def insertRows(file, xy):
         return
     pinevent.update(xy)
     # Insert the entity into the table
-    table_service.insert_entity(table_name, pinevent)        
+    table_client.create_entity( pinevent)        
     print('Successfully inserted the new entity into table - ' + file, table_name, pinevent)
 
 def dist(old, new, thresh):
@@ -138,9 +120,9 @@ def dist(old, new, thresh):
     if old[1] - new[1] < 0:
         return True
     # Is ball moving sideways (x-axis) or is sensor #2 not detecting deadwood or reset
-    if abs(old[0] - new[0] +10) > 20:
-        print('Arm detected')
-        return True
+    # if abs(old[0] - new[0] +10) > 20:
+    #     print('Arm detected')
+    #     return True
     return False
 
 def getCroppedImage(image, crop_array):
@@ -162,7 +144,7 @@ def my_division(n, d):
     return n / d if d else 0
 
 
-basic_blockblob_operations(account)
+# basic_blockblob_operations(account)
 a = []
 a = glob.glob('C:/DownloadsDP/Lane4Free/dp*.h264')
 xyData = [0,0]
