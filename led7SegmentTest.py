@@ -70,7 +70,7 @@ setupGPIO(leds)
 lightsOFF(leds)
 
 lightTESTa(leds, 1, 0)
-lightTESTa(ledAll[::1], 1.5, 0)
+lightTESTa(ledAll[::1], 3, 0)
 lightTESTa(ledAll[::1], .25, 0)
 lightsOFF(leds)
 # listTEST(ledAll)
