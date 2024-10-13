@@ -10,7 +10,7 @@ import Iothub_client_functions as iot
 import iot2
 import picamera
 import io
-import os
+import os 
 import threading
 import cropdata1440
 import myGPIO
@@ -184,7 +184,7 @@ def findPins():
             t = threading.Timer(2.0, timeout)
             timesup = False
             t.start() # after 2.0 seconds, stream will be saved
-            print('timer is running', priorPinCount, pinCount)
+            print('pin fallng timer is running', priorPinCount, pinCount)
             return
 
 def iotSend(filename, result):
@@ -311,9 +311,9 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=47# - (minus) moves blue crops x pixels left
+x=90# - (minus) moves blue crops x pixels left
 x1=0 +x
-y=-43  # -(minus) moves blue crops y pixels up
+y=35  # -(minus) moves blue crops y pixels up
 y1=0 + y
 frameNo = 0
 ballCounter = 0
@@ -384,7 +384,7 @@ with picamera.PiCamera() as camera:
         # if deadwoodTimer+10<time.time():
         #     print(deadwoodTimer, time.time())
         if frameNo%4== 0:
-            print(timesup,timesupDeadwood,timesupReset, frameNo)
+            print(timesup,timesupDeadwood,timesupReset, frameNo, GPIO.input(sensor[0]),GPIO.input(sensor[1]),GPIO.input(sensor[2]))
             if timesupDeadwood and timesupReset:
                 findPins()
         # else:
