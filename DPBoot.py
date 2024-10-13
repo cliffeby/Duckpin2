@@ -14,6 +14,7 @@ import os
 import threading
 import cropdata1440
 import myGPIO
+import offsets
 from picamera.array import PiRGBArray
 import picamera.array
 from PIL import Image
@@ -311,10 +312,10 @@ priorPinCount = 0
 pinsFalling = False
 timesup = True
 activity = "\r\n"
-x=90# - (minus) moves blue crops x pixels left
-x1=0 +x
-y=35  # -(minus) moves blue crops y pixels up
-y1=0 + y
+x = offsets.x  #(minus) moves blue crops x pixels left
+x1 = 0 +x
+y = offsets.y  # -(minus) moves blue crops y pixels up
+y1 = 0 + y
 frameNo = 0
 ballCounter = 0
 videoReadyFrameNo = 10
