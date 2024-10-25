@@ -323,7 +323,8 @@ timesupDeadwood = True
 timesupReset = True
 # deadwoodTimer = time.time()
 lightsOFF(segment7s)
-GPIO.output((segment7All[0]), GPIO.LOW)
+# Kepp ball counter off
+# GPIO.output((segment7All[0]), GPIO.LOW)
 
 with picamera.PiCamera() as camera:
     camera.resolution = setResolution()
@@ -332,8 +333,8 @@ with picamera.PiCamera() as camera:
     camera.rotation = 180
     rawCapture = PiRGBArray(camera, size=camera.resolution)
     # setup a circular buffer
-    # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds)
-    stream = picamera.PiCameraCircularIO(camera, size = 3000000)
+    # stream = picamera.PiCameraCircularIO(camera, seconds = video_preseconds, size = bytes)
+    stream = picamera.PiCameraCircularIO(camera, size = 4000000)
     # video recording into circular buffer from splitter port 1
     camera.start_recording(stream, format='h264', splitter_port=1)
     #camera.start_recording('test.h264', splitter_port=1)
@@ -355,12 +356,13 @@ with picamera.PiCamera() as camera:
             GPIO.wait_for_edge(sensor[0], GPIO.FALLING)
             print('done')
             time.sleep(.05)
-            if GPIO.input(sensor[0]) == 0 and timesupReset == True:
-                ballCounter= ballCounter+1
-                print ("Ball Falling edge", ballCounter)
-                lightsOFF(segment7s)
-                GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
-                print('Ball Timer Awake ', ballCounter)               
+            #  Ball counter eliminated
+            # if GPIO.input(sensor[0]) == 0 and timesupReset == True:
+            #     ballCounter= ballCounter+1
+            #     print ("Ball Falling edge", ballCounter)
+            #     lightsOFF(segment7s)
+            #     GPIO.output((segment7All[ballCounter % 10]), GPIO.LOW)
+            #     print('Ball Timer Awake ', ballCounter)               
         if (GPIO.input(sensor[1]) == GPIO.HIGH):
                 print('Deadwood sensor', ballCounter)
                 if timesupDeadwood == True:
