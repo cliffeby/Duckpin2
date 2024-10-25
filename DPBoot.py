@@ -134,6 +134,7 @@ def flash():
         bit_GPIO(pinsGPIO,0)
         GPIO.output((segment7All[8]), GPIO.LOW)
         time.sleep(.3)
+    lightsOFF(segment7All)
 
 def findPins():
         global x,x1,y,y1
@@ -182,7 +183,7 @@ def findPins():
             return
         else:
             pinsFalling = True
-            t = threading.Timer(2.0, timeout)
+            t = threading.Timer(1.5, timeout)
             timesup = False
             t.start() # after 2.0 seconds, stream will be saved
             print('pin fallng timer is running', priorPinCount, pinCount)
