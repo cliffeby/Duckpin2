@@ -7,6 +7,7 @@ import os
 import time
 import credentials
 import cv2
+import numpy as np
 import cropdata1440  # defines ball crops - area before ball hits pins
 import shutil
 from azure.storage.blob import BlobServiceClient
@@ -95,10 +96,10 @@ def insertRows(file, xy):
     table_client = table_service_client.get_table_client(table_name=table_name)
 
     # Create a table in case it does not already exist
-    try:
-        table_client.create_table()
-    except Exception as err:
-        print('Error creating table, '  + 'check if it already exists')
+    # try:
+    #     table_client.create_table()
+    # except Exception as err:
+    #     print('Error creating table, '  + 'check if it already exists', err)
     rowkey = str(getRowKey())
     pinevent = {'PartitionKey':'Lane 4','RowKey': rowkey,'res':'1440', 'beginingPinCount': findBeg(file)[0], 'endingPinCount': findBeg(file)[1] }
     if len(xy) < 2:  #In a dictionary the key and value are counted as one entry
@@ -133,19 +134,14 @@ def getCroppedImage(image, crop_array):
 def cleanup():
     a = glob.glob('C:/DownloadsDP/Lane4Free/dp*.h264')
     fileCounter = 0
-    directory = 'C:/DownloadsDP/TempHold/'
+    # directory = 'C:/DownloadsDP/TempHold/'
     while fileCounter < len(a):
         if os.path.isfile(a[fileCounter]):
-            # b_temp_file = a[fileCounter].replace("Lane4Free", "TempHold")
-            # if not os.path.isdir(directory):
-            #     os.mkdir(directory)
-            # file = open(b_temp_file, "w")
-            # file.write(b_temp_file)
-            shutil.move(a[fileCounter],directory)
-            print('Moved file', fileCounter)
-            # file.close()
-            # os.remove(a[fileCounter])
-            # print('Deleted file', fileCounter, a[fileCounter])
+            # shutil.move(a[fileCounter],directory)
+            # print('Moved file', fileCounter)
+            file.close()
+            os.remove(a[fileCounter])
+            print('Deleted file', fileCounter, a[fileCounter])
         else:    ## Show an error ##
             print("Error: %s file not found" % a[fileCounter])
         fileCounter += 1
@@ -153,6 +149,12 @@ def cleanup():
 def my_division(n, d):
     return n / d if d else 0
 
+def fixskew(img):
+    pts1 = np.float32([[240,550],[1050,580],[0,1000],[1295,1000]]) # skewed area in front of pins
+    pts2 = np.float32([[0,0],[875,0],[0,460],[1000,460]]) # rectangular area
+    M = cv2.getPerspectiveTransform(pts1,pts2)
+    dst = cv2.warpPerspective(img,M,(1000,400))
+    return dst
 
 # basic_blockblob_operations(account)
 a = []
@@ -163,20 +165,29 @@ pinData = []
 fileCounter = 0
 cap = cv2.VideoCapture(a[1])
 ret, frame0 = cap.read()
-# cv2.imwrite('C:/DownloadsDP/Lane4Free/dplane.jpg',frame0)
 frame1= cv2.imread('C:/DownloadsDP/Lane4Free/dplane.jpg')
-frame1 = getCroppedImage(frame1, ball_crops)
+fxImage = fixskew(frame1)
+# frame1 = getCroppedImage(frame1, ball_crops)
+frame1 = fixskew(frame1)
 img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
+# fxImage = fixskew(img_gray1)
+cv2.imwrite('C:/DownloadsDP/TempHold1/dpballfxdskew'+ time.strftime("%Y%m%d") +'.jpg', fxImage)
+
+# cv2.imwrite('C:/DownloadsDP/Lane4Free/dplane.jpg',frame0)
+# frame1= cv2.imread('C:/DownloadsDP/Lane4Free/dplane.jpg')
+# frame1 = getCroppedImage(frame1, ball_crops)
+# img_gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
 img_gray_show = copy.deepcopy(img_gray1)
 img_gray_show_line = copy.deepcopy(img_gray1)
-
+colorFlag = False
 while (cap.isOpened()):
     ret, frame2 = cap.read()
     try:
         type(frame2[0]) is None
     except:
         print("End of Video ", fileCounter)
-        
+        colorFlag = False
+        # if fileCounter < 10:
         if fileCounter < len(a)-1:
             cap.release()
             xy = formatxy(pinData)
@@ -206,11 +217,11 @@ while (cap.isOpened()):
     img_rgb = frame2
     if frame2 is None:
         continue
-    frame2 = getCroppedImage(frame2, ball_crops)
+    frame2 = fixskew(frame2)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1, img_gray2)
     # First value reduces noise.  Values above 150 seem to miss certain ball colors
-    ret, thresh = cv2.threshold(diff, 120, 255, cv2.THRESH_BINARY)
+    ret, thresh = cv2.threshold(diff, 80, 255, cv2.THRESH_BINARY)
     # Blur eliminates noise by averaging surrounding pixels.  Value is array size of blur and MUST BE ODD
     thresh = cv2.medianBlur(thresh, 5)
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,
@@ -243,7 +254,11 @@ while (cap.isOpened()):
                     xyData = oldxyData
                     print('Ball not moving - dist and location', xyData)
                 else:
-                    cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0, 255, 0), 1)
+                    if abs(oldxyData[0]-xyData[0])>20 or colorFlag:
+                        cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (255, 0, 0), 1)
+                        colorFlag = True
+                    else:
+                        cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0, 255, 0), 1)
                     cv2.circle(img_gray_show_line, xyData, 3, (0, 255, 0), -1)
                     cv2.circle(img_gray_show_line, oldxyData, 3, (0, 255, 0), -1)
                 

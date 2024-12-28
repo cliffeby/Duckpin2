@@ -1,4 +1,5 @@
 # import the necessary packages
+import json
 import copy
 import datetime
 import glob
@@ -8,7 +9,6 @@ import time
 import credentials
 import cv2
 import cropdata1440  # defines ball crops - area before ball hits pins
-import shutil
 from azure.storage.blob import BlobServiceClient
 from azure.core.credentials import AzureNamedKeyCredential
 from azure.data.tables import TableServiceClient
@@ -25,32 +25,46 @@ table_name='pindata'
 container = 'jsoncontdp'
 downloadDir = 'c:/DownloadsDP/' 
 ball_crops = cropdata1440.ballCrops
-ball_crops = [460, 885, 10, 1200]
+# ball_crops = [490, 885, 10, 1200]
+
 
 # Create the BlobServiceClient object
-blob_service_client = BlobServiceClient(account_url, credential=account)
-blob_client = blob_service_client.get_blob_client(container=container, blob='any_file_name')
-container_client = blob_service_client.get_container_client(container)
-print("\nListing blobs...")
+
+# blob_service_client = BlobServiceClient(account_url, credential=account)
+# blob_client = blob_service_client.get_blob_client(container=container, blob='any_file_name')
+# container_client = blob_service_client.get_container_client(container)
+# print("\nListing blobs...")
 
 # List the blobs in the container
-blob_list = container_client.list_blobs()
-for blob in blob_list:
-    print("\t" + blob.name)
-    file = blob.name
-    
-# Download the blob
-    container_client.get_blob_client(container,file)
-    
-    file1 = downloadDir+file
 
-    with open(file1, "wb") as my_blob:
-        download_stream = container_client.download_blob(file)
-        my_blob.write(download_stream.readall())
+# blob_list = container_client.list_blobs()
+# for blob in blob_list:
+#     print("\t" + blob.name)
+#     file = blob.name
+    
+# # Download the blob
+#     container_client.get_blob_client(container,file)
+    
+#     file1 = downloadDir+file
 
-        if ".h264" in file:
-            print('Delete  Blob ', downloadDir+file)
-            container_client.delete_blob(file)
+#     with open(file1, "wb") as my_blob:
+#         download_stream = container_client.download_blob(file)
+#         my_blob.write(download_stream.readall())
+
+#         if ".h264" in file:
+#             print('Delete  Blob ', downloadDir+file)
+#             container_client.delete_blob(file)
+def play_video(file_path):
+    cap = cv2.VideoCapture(file_path)
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        cv2.imshow('Video', frame)
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            break
+    cap.release()
+    cv2.destroyAllWindows()
 
 def findBeg(file):
     # Parse file name for beginning and ending pin state
@@ -128,6 +142,7 @@ def dist(old, new, thresh):
 
 def getCroppedImage(image, crop_array):
     croppedImage = image[crop_array[0]:crop_array[1],crop_array[2]:crop_array[3]]
+    # croppedImage = image[50:420,55:1230]
     return croppedImage
 
 def cleanup():
@@ -136,16 +151,15 @@ def cleanup():
     directory = 'C:/DownloadsDP/TempHold/'
     while fileCounter < len(a):
         if os.path.isfile(a[fileCounter]):
-            # b_temp_file = a[fileCounter].replace("Lane4Free", "TempHold")
-            # if not os.path.isdir(directory):
-            #     os.mkdir(directory)
-            # file = open(b_temp_file, "w")
-            # file.write(b_temp_file)
-            shutil.move(a[fileCounter],directory)
-            print('Moved file', fileCounter)
-            # file.close()
-            # os.remove(a[fileCounter])
-            # print('Deleted file', fileCounter, a[fileCounter])
+            b_temp_file = a[fileCounter].replace("Lane4Free", "TempHold")
+            if not os.path.isdir(directory):
+                os.mkdir(directory)
+            file = open(b_temp_file, "w")
+            file.write(b_temp_file)
+            print('Created file', fileCounter, b_temp_file)
+            file.close()
+            os.remove(a[fileCounter])
+            print('Deleted file', fileCounter, a[fileCounter])
         else:    ## Show an error ##
             print("Error: %s file not found" % a[fileCounter])
         fileCounter += 1
@@ -153,15 +167,41 @@ def cleanup():
 def my_division(n, d):
     return n / d if d else 0
 
+def moving(xy):
+    print(xy, len(xy), type(xy))
+    if len(xy) < 4:
+        return False
+    xydata = json.dumps(xy)
+    xydata1 = json.loads(xydata)
+    print(xydata, xydata1, xydata1['y1'])
+    ys = ['y0','y1','y2','y3','y4','y5']
+    xs = ['x0','x1','x2','x3','x4','x5']
+    counter = 1
+    for y in range(1, 12):
+        print (y, int((len(xy))/2-1), len(xy))
+        if y > int((len(xy))/2-1):
+            
+            break
+        print(y, counter)
+        print('TF',xydata1[ys[y-1]], xydata1[ys[y]])    
+        if int(xydata1[ys[y-1]])-int(xydata1[ys[y]])< abs(5):
+            print('Fy',xydata1[ys[y-1]], xydata1[ys[y]])    
+            return False
+        if int(xydata1[xs[0]])-int(xydata1[xs[y]])> abs(25):
+            print('Fx',xydata1[0], xydata1[xs[y]])    
+            return False
+        print('T',xydata1[ys[y-1]], xydata1[ys[y]]) 
+        counter = counter+1
+    return True
 
 # basic_blockblob_operations(account)
 a = []
-a = glob.glob('C:/DownloadsDP/Lane4Free/dp*.h264')
+a = glob.glob('C:/DownloadsDP/TempHold1/dp*.h264')
 xyData = [0,0]
 oldxyData = None
 pinData = []
 fileCounter = 0
-cap = cv2.VideoCapture(a[1])
+cap = cv2.VideoCapture(a[0])
 ret, frame0 = cap.read()
 # cv2.imwrite('C:/DownloadsDP/Lane4Free/dplane.jpg',frame0)
 frame1= cv2.imread('C:/DownloadsDP/Lane4Free/dplane.jpg')
@@ -178,10 +218,13 @@ while (cap.isOpened()):
         print("End of Video ", fileCounter)
         
         if fileCounter < len(a)-1:
+            print(os.path.split(a[fileCounter])[-1])
             cap.release()
             xy = formatxy(pinData)
             if len(xy) > 0:
-                insertRows(a[fileCounter], xy)
+                print(moving(xy))
+                # insertRows(a[fileCounter], xy)
+                print('would have inserted in table', moving(xy),fileCounter,os.path.split(a[fileCounter])[-1])
             else:
                 print('No ball data in Video ', fileCounter)
             # Get new video file
@@ -195,13 +238,15 @@ while (cap.isOpened()):
             cap.release()
             xy = formatxy(pinData)
             if len(xy)>0:
-                insertRows(a[fileCounter], xy)
+                # insertRows(a[fileCounter], xy)
+                print('Would have inserted rows',moving(xy),xy)
             else:
                 print('No ball data in final Video ', fileCounter)
             print('No more data to process')
-            cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg', img_gray_show_line)
+            cv2.imwrite('C:/DownloadsDP/TempHold1/dpballgrayline'+ time.strftime("%Y%m%d") +'.jpg', img_gray_show_line)
+            cv2.imwrite('C:/DownloadsDP/TempHold1/dpballgraylineA'+ time.strftime("%Y%m%d") +'.jpg', img_gray_show)
             print('Saving line image ')
-            cleanup()  # Delete files from local storage
+            # don't delete  cleanup()  # Delete files from local storage
             break
     img_rgb = frame2
     if frame2 is None:
@@ -217,45 +262,64 @@ while (cap.isOpened()):
 		cv2.CHAIN_APPROX_SIMPLE)[-2]
     center = None
     radius = 0
-    if len(cnts) > 0:
+    numberOfCountours = len(cnts)
+    if numberOfCountours > 0:
 		# find the largest contour in the mask, then use
 		# it to compute the minimum enclosing circle and centroid
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
+        print('Radius',radius)
 		# only proceed if the radius meets a minimum size
-        if radius > 20:
+        if radius > 10:
             # Find the xy center of the ball in the frame then,
             # draw the circle on the frame,
             # then update the list of tracked points
             M = cv2.moments(c)
             center = (int(my_division(M["m10"],M["m00"])), int(my_division(M["m01"], M["m00"])))
             xyData = (center[0], center[1])
+            print('XY ',xyData)
+            if center[1] <40 or center[0] < 70:
+                continue
             pinData.append(xyData)
-            cv2.drawContours(img_gray_show, c, -1, (0, 255, 0), 3)
+            # cv2.drawContours(img_gray_show, c, -1, (0, 255, 0), 3)
             # Eliminate centers of early half ball contours
             if center[1]>380:
-                xyData = oldxyData
+                # xyData = oldxyData
                 continue
             # Eliminate centers of slow and backward moving balls
             elif oldxyData != None:
                 if dist(oldxyData, xyData, 5):
+                    print('Ball not moving - dist and location', xyData,oldxyData,os.path.split(a[fileCounter])[-1],
+                          numberOfCountours, radius)
                     pinData.pop()
                     xyData = oldxyData
-                    print('Ball not moving - dist and location', xyData)
+                    
+                    numberOfCountours=0
+                    radius = 0
                 else:
+                    cv2.drawContours(img_gray_show, c, -1, (0, 255, 0), 3)
+                    print ( 'radius ', radius)
+                    # input('press return')
                     cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0, 255, 0), 1)
                     cv2.circle(img_gray_show_line, xyData, 3, (0, 255, 0), -1)
                     cv2.circle(img_gray_show_line, oldxyData, 3, (0, 255, 0), -1)
-                
+                    # input('press return')
             oldxyData = xyData
-
+    cv2.line(img_gray_show_line, (226, 50),(1110, 80), (0, 255, 0), 1)
+    cv2.line(img_gray_show_line, (55, 415),(1230, 420), (0, 255, 0), 1)
+    cv2.line(img_gray_show_line, (226, 50),(55, 415), (0, 255, 0), 1)
+    cv2.line(img_gray_show_line, (1110, 80),(1230, 420), (0, 255, 0), 1)
+    cv2.imshow('Video', frame2)
     cv2.imshow('Ball locations' , img_gray_show)
     cv2.imshow('Ball line' , img_gray_show_line)
+    cv2.imwrite('C:/DownloadsDP/TempHold1/dpballgraylineA'+ time.strftime("%Y%m%d") +'.jpg', img_gray_show)
+    input('press return')
     # if frameNo < 100:
     #     cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgray' +str(frameNo) +'.jpg',img_gray_show )
     #     print('Saving image ', frameNo)
-    
     key = cv2.waitKey(1) & 0xFF
     # if the `q` key was pressed, break from the loop
     if key == ord("q"):
         break
+print(fileCounter)   
+
