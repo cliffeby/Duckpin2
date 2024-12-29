@@ -110,7 +110,10 @@ def insertRows(file, xy):
     pinevent.update(xy)
     # Insert the entity into the table
     table_client.create_entity( pinevent)        
-    print('Successfully inserted the new entity into table - ' + file, table_name, pinevent)
+    print('Successfully inserted the new entity into table - ' +str(not colorFlag)+ ' ' + file, table_name, pinevent)
+    with open("C:/DownloadsDP/Lane4Free/rows.txt", "a") as myfile:
+        row = str( not colorFlag) + ' '+ rowkey+ " " + str(findBeg(file)[0]) + ' ' +str(findBeg(file)[1]) + str(xy) + '\n'
+        myfile.write(row)
 
 def dist(old, new, thresh):
     # Checks for very slow ball movement or arm looking like a ball
@@ -139,7 +142,7 @@ def cleanup():
         if os.path.isfile(a[fileCounter]):
             # shutil.move(a[fileCounter],directory)
             # print('Moved file', fileCounter)
-            file.close()
+            # file.close()
             os.remove(a[fileCounter])
             print('Deleted file', fileCounter, a[fileCounter])
         else:    ## Show an error ##
@@ -186,8 +189,7 @@ while (cap.isOpened()):
         type(frame2[0]) is None
     except:
         print("End of Video ", fileCounter)
-        colorFlag = False
-        # if fileCounter < 10:
+        
         if fileCounter < len(a)-1:
             cap.release()
             xy = formatxy(pinData)
@@ -202,6 +204,7 @@ while (cap.isOpened()):
             ret, frame2 = cap.read() 
             pinData = []
             img_gray_show = copy.deepcopy(img_gray1)
+            colorFlag = False
         else:
             cap.release()
             xy = formatxy(pinData)
@@ -257,6 +260,7 @@ while (cap.isOpened()):
                     if abs(oldxyData[0]-xyData[0])>20 or colorFlag:
                         cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (255, 0, 0), 1)
                         colorFlag = True
+                        print('Flagged')
                     else:
                         cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0, 255, 0), 1)
                     cv2.circle(img_gray_show_line, xyData, 3, (0, 255, 0), -1)
