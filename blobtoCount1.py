@@ -237,7 +237,7 @@ while (cap.isOpened()):
         c = max(cnts, key=cv2.contourArea)
         ((xContour, yContour), radius) = cv2.minEnclosingCircle(c)
 		# only proceed if the radius meets a minimum size
-        if radius > 20:
+        if radius > 30:
             # Find the xy center of the ball in the frame then,
             # draw the circle on the frame,
             # then update the list of tracked points
@@ -250,17 +250,20 @@ while (cap.isOpened()):
             if center[1]>380:
                 xyData = oldxyData
                 continue
+            if xyData[0]> 976:
+                xyData = oldxyData
+                continue
             # Eliminate centers of slow and backward moving balls
             elif oldxyData != None:
                 if dist(oldxyData, xyData, 5):
                     pinData.pop()
                     xyData = oldxyData
-                    print('Ball not moving - dist and location', xyData)
+                    print('Ball not moving - dist and location', xyData, radius)
                 else:
                     if abs(oldxyData[0]-xyData[0])>20 or colorFlag:
                         cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (255, 0, 0), 1)
                         colorFlag = True
-                        print('Flagged')
+                        print('Flagged',oldxyData,xyData)
                     else:
                         cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0, 255, 0), 1)
                     cv2.circle(img_gray_show_line, xyData, 3, (0, 255, 0), -1)
