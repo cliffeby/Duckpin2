@@ -191,6 +191,12 @@ while (cap.isOpened()):
         print("End of Video ", fileCounter)
         
         if fileCounter < len(a)-1:
+            # Save the final frame before moving to next video
+            if 'last_valid_frame' in locals():
+                final_frame_path = f'C:/DownloadsDP/Lane4Free/final_frame_video_{fileCounter}_{time.strftime("%Y%m%d_%H%M%S")}.jpg'
+                cv2.imwrite(final_frame_path, last_valid_frame)
+                print(f'Saved final frame: {final_frame_path}')
+            
             cap.release()
             xy = formatxy(pinData)
             if len(xy) > 0:
@@ -206,6 +212,12 @@ while (cap.isOpened()):
             img_gray_show = copy.deepcopy(img_gray1)
             colorFlag = False
         else:
+            # Save the final frame of the last video
+            if 'last_valid_frame' in locals():
+                final_frame_path = f'C:/DownloadsDP/Lane4Free/final_frame_video_{fileCounter}_{time.strftime("%Y%m%d_%H%M%S")}.jpg'
+                cv2.imwrite(final_frame_path, last_valid_frame)
+                print(f'Saved final frame of last video: {final_frame_path}')
+            
             cap.release()
             xy = formatxy(pinData)
             if len(xy)>0:
@@ -220,6 +232,9 @@ while (cap.isOpened()):
     img_rgb = frame2
     if frame2 is None:
         continue
+    
+    # Store this frame as the last valid frame
+    last_valid_frame = frame2.copy()
     frame2 = fixskew(frame2)
     img_gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
     diff = cv2.absdiff(img_gray1, img_gray2)
@@ -263,7 +278,22 @@ while (cap.isOpened()):
                     if abs(oldxyData[0]-xyData[0])>20 or colorFlag:
                         cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (255, 0, 0), 1)
                         colorFlag = True
-                        print('Flagged',oldxyData,xyData)
+                        print('Flagged',oldxyData,xyData, 'File', fileCounter)
+                        # font
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+
+                        # org
+                        org = (oldxyData[0], oldxyData[1])
+
+                        # fontScale
+                        fontScale = 1
+                        
+                        # Blue color in BGR
+                        color = (255, 0, 0)
+
+                        # Line thickness of 2 px
+                        thickness = 1
+                        cv2.putText(img_gray_show_line, str(fileCounter), org, font, fontScale, color, thickness)
                     else:
                         cv2.line(img_gray_show_line, (oldxyData[0], oldxyData[1]),(xyData[0], xyData[1]), (0, 255, 0), 1)
                     cv2.circle(img_gray_show_line, xyData, 3, (0, 255, 0), -1)
@@ -273,6 +303,7 @@ while (cap.isOpened()):
 
     cv2.imshow('Ball locations' , img_gray_show)
     cv2.imshow('Ball line' , img_gray_show_line)
+    cv2.imshow('Frame2' , frame2)
     # if frameNo < 100:
     #     cv2.imwrite('C:/DownloadsDP/Lane4Free/dpballgray' +str(frameNo) +'.jpg',img_gray_show )
     #     print('Saving image ', frameNo)
