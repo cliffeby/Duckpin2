@@ -88,13 +88,24 @@ def write_video(stream,result):
 # Write the entire content of the circular buffer to disk. No need to
 # lock the stream here as we're definitely not writing to it
 # simultaneously
-    global frameNo, videoReadyFrameNo
+    global frameNo, videoReadyFrameNo, img_rgb, priorPinCount
     if frameNo < videoReadyFrameNo + 120:
         return
     videoReadyFrameNo = frameNo
     print("writng dp ", result)
+    
+    # Extract pin counts from result string
+    # result format is " _beginningPinCount_endingPinCount_frameNo"
+    parts = result.split('_')
+    if len(parts) >= 3:
+        beginning_pins = int(parts[1])
+        ending_pins = int(parts[2])
+        
+        # Capture final frame before writing video
+        if img_rgb is not None:
+            captureFinalFrame(img_rgb, beginning_pins, ending_pins)
+    
     #setup ram dsk
-
     with io.open('/dp/log/firstFile.h264', 'wb') as output:
         for frame in stream.frames:
             if frame.frame_type == picamera.PiVideoFrameType.sps_header:
@@ -234,6 +245,67 @@ def iotSend(filename, result):
     finally:
     # Graceful exit
         client.shutdown()
+
+def captureFinalFrame(final_frame, beginning_pin_count, ending_pin_count):
+    """
+    Captures the final frame of video, saves as JPG with pin count info, and uploads to Azure
+    
+    Args:
+        final_frame: The final frame image from video
+        beginning_pin_count: Pin count at start of ball roll
+        ending_pin_count: Pin count at end of ball roll
+    """
+    global frameNo
+    
+    # Create unique identifier using timestamp
+    timestamp = time.strftime("%Y%m%d_%H%M%S")
+    unique_id = str(int(time.time() * 1000))[-6:]  # Last 6 digits of millisecond timestamp
+    
+    # Create filename with pin counts and unique identifier
+    local_filename = f"/home/cliffeby/Videos/finalframe_pins_{beginning_pin_count}_to_{ending_pin_count}_{timestamp}_{unique_id}.jpg"
+    azure_filename = f"finalframe_pins_{beginning_pin_count}_to_{ending_pin_count}_{timestamp}_{unique_id}.jpg"
+    
+    # Save the frame as JPG
+    success = cv2.imwrite(local_filename, final_frame)
+    
+    if success:
+        print(f"Final frame saved locally: {local_filename}")
+        
+        # Upload to Azure
+        client = IoTHubDeviceClient.create_from_connection_string(CONNECTION_STRING)
+        try:
+            print("Uploading final frame to Azure...")
+            client.connect()
+            
+            # Get the storage info for the blob
+            storage_info = client.get_storage_info_for_blob(azure_filename)
+            
+            # Upload to blob
+            upload_success, upload_result = iot2.store_blob(storage_info, local_filename)
+            
+            if upload_success:
+                print(f"Final frame uploaded successfully: {azure_filename}")
+                print(f"Upload result: {upload_result}")
+                
+                client.notify_blob_upload_status(
+                    storage_info["correlationId"], True, 200, "OK: {}".format(local_filename)
+                )
+                
+                # Optionally remove local file after successful upload
+                # os.remove(local_filename)
+                
+            else:
+                print(f"Final frame upload failed: {upload_result}")
+                client.notify_blob_upload_status(
+                    storage_info["correlationId"], False, upload_result.status_code, str(upload_result)
+                )
+                
+        except Exception as e:
+            print(f"Error uploading final frame: {e}")
+        finally:
+            client.shutdown()
+    else:
+        print(f"Failed to save final frame locally: {local_filename}")
 
 def iotSendImg(filename):
         global frameNo

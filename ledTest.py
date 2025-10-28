@@ -1,4 +1,26 @@
 import RPi.GPIO as GPIO
+"""
+LED Test Module for Raspberry Pi GPIO Control
+This module provides functions to control LED arrays connected to Raspberry Pi GPIO pins.
+It supports multiple LED configurations and includes utilities for testing and pattern display.
+Functions:
+    setupGPIO(pins): Initialize GPIO pins for output mode
+    lightsOFF(pins): Turn off all LEDs in the specified pin array
+    lightTESTa(pins, wait1, wait2): Sequential LED test with configurable timing
+    bit_GPIO(pins, bits): Display binary patterns on LED array
+Global Variables:
+    leds1-leds5: Different GPIO pin configurations for various LED orientations
+    led7: 7-segment display pin configuration from myGPIO module
+Dependencies:
+    - RPi.GPIO: Raspberry Pi GPIO control library
+    - myGPIO: Custom GPIO configuration module
+    - time: For sleep delays between LED operations
+    - random: For generating random test patterns
+Usage:
+    This script is designed for testing LED arrays in different orientations and
+    configurations. It demonstrates sequential lighting, reverse lighting, and
+    binary pattern display capabilities.
+"""
 import time
 import myGPIO
 from random import randint
