@@ -212,7 +212,7 @@ def iotSend(filename, result):
 
     # Get the storage info for the blob
         blob_name = os.path.basename(filename)
-        vidfile = "dp" + result + ".h264"
+        vidfile = "videos/dp" + result + ".h264"
         storage_info = client.get_storage_info_for_blob(vidfile)
         print("blob_name2 +++: ", blob_name, filename, storage_info)
 
@@ -263,7 +263,7 @@ def captureFinalFrame(final_frame, beginning_pin_count, ending_pin_count):
     
     # Create filename with pin counts and unique identifier
     local_filename = f"/home/cliffeby/Videos/finalframe_pins_{beginning_pin_count}_to_{ending_pin_count}_{timestamp}_{unique_id}.jpg"
-    azure_filename = f"finalframe_pins_{beginning_pin_count}_to_{ending_pin_count}_{timestamp}_{unique_id}.jpg"
+    azure_filename = f"images/finalframe_pins_{beginning_pin_count}_to_{ending_pin_count}_{timestamp}_{unique_id}.jpg"
     
     # Save the frame as JPG
     success = cv2.imwrite(local_filename, final_frame)
@@ -310,7 +310,7 @@ def captureFinalFrame(final_frame, beginning_pin_count, ending_pin_count):
 def iotSendImg(filename):
         global frameNo
         # v1 client.send_reported_state(reported_state, len(reported_state), iot.send_reported_state_callback, iot.SEND_REPORTED_STATE_CONTEXT)
-        img_name = "imgdp" + time.strftime('%A') + ".jpg"
+        img_name = "images/imgdp" + time.strftime('%A') + ".jpg"
         f = open(filename, "rb+")
         content = f.read()
         
