@@ -40,17 +40,27 @@ for blob in blob_list:
     print("\t" + blob.name)
     file = blob.name
     
-# Download the blob
+    # Only download files from the Lane4Free/videos folder
+    if not file.startswith("Lane4Free/videos/"):
+        print(f"Skipping non-video file: {file}")
+        continue
+    
+    # Download the blob
     container_client.get_blob_client(container,file)
     
-    file1 = downloadDir+file
+    # Create local file path, removing the "Lane4Free/videos/" prefix for local storage
+    local_filename = file.replace("Lane4Free/videos/", "")
+    file1 = downloadDir + "Lane4Free/" + local_filename
+    
+    # Ensure the local directory exists
+    os.makedirs(os.path.dirname(file1), exist_ok=True)
 
     with open(file1, "wb") as my_blob:
         download_stream = container_client.download_blob(file)
         my_blob.write(download_stream.readall())
 
         if ".h264" in file:
-            print('Delete  Blob ', downloadDir+file)
+            print('Delete  Blob ', downloadDir + "Lane4Free/" + local_filename)
             container_client.delete_blob(file)
 
 def findBeg(file):
