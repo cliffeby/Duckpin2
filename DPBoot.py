@@ -246,6 +246,27 @@ def iotSend(filename, result):
     # Graceful exit
         client.shutdown()
 
+def cleanupFinalFrameFiles():
+    """
+    Clean up any remaining local finalframe_pins_ files that may not have been deleted
+    """
+    try:
+        video_dir = "/home/cliffeby/Videos"
+        if os.path.exists(video_dir):
+            for filename in os.listdir(video_dir):
+                if filename.startswith("finalframe_pins_") and filename.endswith(".jpg"):
+                    file_path = os.path.join(video_dir, filename)
+                    try:
+                        # Check if file is older than 1 hour to avoid deleting recently created files
+                        file_age = time.time() - os.path.getmtime(file_path)
+                        if file_age > 600000:  # about a week in seconds
+                            os.remove(file_path)
+                            print(f"Cleaned up old final frame file: {filename}")
+                    except Exception as e:
+                        print(f"Error cleaning up file {filename}: {e}")
+    except Exception as e:
+        print(f"Error during final frame cleanup: {e}")
+
 def captureFinalFrame(final_frame, beginning_pin_count, ending_pin_count):
     """
     Captures the final frame of video, saves as JPG with pin count info, and uploads to Azure
@@ -291,8 +312,12 @@ def captureFinalFrame(final_frame, beginning_pin_count, ending_pin_count):
                     storage_info["correlationId"], True, 200, "OK: {}".format(local_filename)
                 )
                 
-                # Optionally remove local file after successful upload
-                # os.remove(local_filename)
+                # Remove local file after successful upload
+                try:
+                    os.remove(local_filename)
+                    print(f"Local file deleted: {local_filename}")
+                except Exception as e:
+                    print(f"Warning: Could not delete local file {local_filename}: {e}")
                 
             else:
                 print(f"Final frame upload failed: {upload_result}")
@@ -395,6 +420,7 @@ videoReadyFrameNo = 10
 timesupDeadwood = True
 timesupReset = True
 # deadwoodTimer = time.time()
+lastCleanupTime = time.time()  # Track when we last cleaned up files
 lightsOFF(segment7s)
 # Kepp ball counter off
 # GPIO.output((segment7All[0]), GPIO.LOW)
@@ -459,6 +485,12 @@ with picamera.PiCamera() as camera:
         writeImageSeries(30, 1, img_rgb)
         # if deadwoodTimer+10<time.time():
         #     print(deadwoodTimer, time.time())
+        
+        # Periodic cleanup of old final frame files (every 10 minutes)
+        if time.time() - lastCleanupTime > 600:  # 600 seconds = 10 minutes
+            cleanupFinalFrameFiles()
+            lastCleanupTime = time.time()
+            
         if frameNo%4== 0:
             print(timesup,timesupDeadwood,timesupReset, frameNo, GPIO.input(sensor[0]),GPIO.input(sensor[1]),GPIO.input(sensor[2]))
             if timesupDeadwood and timesupReset:
